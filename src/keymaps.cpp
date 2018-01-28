@@ -40,7 +40,6 @@ void KeymapStack::Pop() {
 void KeymapStack::Push(const Keymap& val) {
 	if (!node->next)
 		throw std::out_of_range("KeymapStack Out of range, you might want to increase KEYMAP_STACK_SIZE");
-	//assert(node->next); //overflow you might want to increase KEYMAP_STACK_SIZE
 	node = node->next;
 	node->used = true;
 	node->value = val;

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <stack>
-#include <map>
+#include <vector>
 
 #ifndef KEYMAP_SIZE
 #define KEYMAP_SIZE 256
