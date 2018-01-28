@@ -16,15 +16,9 @@ struct KeymapStack;
 typedef size_t Key;
 typedef void (*KeyAction) (const KeymapStack *);
 //typedef std::function<void(const KeymapStack*)> KeyAction;
+typedef std::array<KeyAction, KEYMAP_SIZE> Keymap;
 
-struct Keymap {
-	std::array<KeyAction, KEYMAP_SIZE> data;
-	Keymap();
-	Keymap(const Keymap& obj);
-	~Keymap();
-	KeyAction& operator[] (Key key);
-	const KeyAction& operator[] (Key key) const;
-};
+
 class KeymapStack {
 public:
 	std::vector<Keymap> keymaps;//keep track of keymaps and handle memory for them
@@ -33,7 +27,7 @@ public:
 
 	~KeymapStack();
 	void Pop();
-	void Push(const Keymap& keymap);
+	void Push(const Keymap& val);
 	const Keymap& Top();
 	void PressKey(Key key);
 
@@ -43,9 +37,8 @@ private:
 		Node *prev;
 		bool used;
 		Keymap value;
-		~Node();
 	};
-	Node *root;
+	Node *nodes;
 	Node *node;
 };
 }//namespace Kmswm

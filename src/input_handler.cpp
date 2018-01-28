@@ -76,7 +76,7 @@ void InputHandler::Update() {
 		}
 		printf("%s c=%d:", msg.c_str(), e.code);
 		keymapStack.PressKey(e.code);
-		puts("\n");
+		putchar('\n');
 	}
 }
 

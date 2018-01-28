@@ -1,67 +1,49 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <stdexcept>
+
 #include "keymaps.h"
 
-
-
 namespace Kmswm {
-Keymap::Keymap() {
-}
-Keymap::Keymap(const Keymap& obj) :
-	data(obj.data) {
-}
-Keymap::~Keymap() {
-}
-const KeyAction& Keymap::operator[] (Key key) const {
-	assert(key < KEYMAP_SIZE); //you might want to increase KEYMAP_SIZE
-	return this->data[key];
-}
-KeyAction& Keymap::operator[] (Key key) {
-	assert(key < KEYMAP_SIZE); //you might want to increase KEYMAP_SIZE
-	return this->data[key];
-}
-
-/*
-struct Node {
-	Node *next;
-	bool used;
-	Keymap value;
-};
-Node *stack;
-*/
-KeymapStack::Node::~Node() {
-	if (next) delete next;
-}
 KeymapStack::KeymapStack() {
 }
 KeymapStack::KeymapStack(std::vector<Keymap> keymaps, size_t defaultKeymap/* = 0*/) :
 		keymaps(keymaps) {
-	Node **n = &root;
-	Node *prev = nullptr;
-	for (int i = 0; i < KEYMAP_STACK_SIZE; ++i) {
-		*n = new Node();
-		(*n)->prev = prev;
-		prev = *n;
-		n = &(prev->next);
+
+	static_assert(KEYMAP_STACK_SIZE >= 2);// KEYMAP_STACK_SIZE must be greater than 2
+	nodes = new Node[KEYMAP_STACK_SIZE];
+	nodes[0].prev = nullptr;
+	nodes[0].next = nodes + 1;
+	
+	for (int i = 1; i < KEYMAP_STACK_SIZE - 1; ++i) {
+		nodes[i].prev = nodes + i - 1;
+		nodes[i].next = nodes + i + 1;
+		nodes[i].used = false;
 	}
-	*n = nullptr;
-	root->value = keymaps[defaultKeymap];
-	root->used = true;
-	node = root;
+	nodes[KEYMAP_STACK_SIZE-1].prev = nodes + KEYMAP_STACK_SIZE - 2;
+	nodes[KEYMAP_STACK_SIZE-1].next = nullptr;
+
+	node = nodes;
+	node->value = keymaps[defaultKeymap];
+	node->used = true;
 }
 KeymapStack::~KeymapStack() {
-	delete root;
+	delete[] nodes;
 }
+
 void KeymapStack::Pop() {
 	if (!node->prev) return;
 	node->used = false;
 	node = node->prev;
 }
-void KeymapStack::Push(const Keymap& keymap) {
+void KeymapStack::Push(const Keymap& val) {
+	if (!node->next)
+		throw std::out_of_range("KeymapStack Out of range, you might want to increase KEYMAP_STACK_SIZE");
+	//assert(node->next); //overflow you might want to increase KEYMAP_STACK_SIZE
 	node = node->next;
 	node->used = true;
-	node->value = keymap;
+	node->value = val;
 }
 const Keymap& KeymapStack::Top() {
 	return node->value;
