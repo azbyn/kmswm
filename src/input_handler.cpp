@@ -22,7 +22,7 @@ InputHandler::InputHandler(const char *devicePath, void (*onExit) (void)) :
 			keymapStack(GenenerateKeymapStack()) {
 	running = true;
 	this->onExit = onExit;
-	this->fd = open(devicePath, O_RDONLY);
+	this->fd = open(devicePath, O_RDWR);
 	if (fd == -1) {
 		panic(1, "Can't open '%s'", devicePath);
 	}
@@ -40,6 +40,12 @@ InputHandler::~InputHandler() {
 void InputHandler::ThreadInit() {
 	thread.join();
 }
+
+void InputHandler::Write(uint16_t type, uint16_t code, int32_t value) {
+	struct input_event e = {{}, type, code, value };
+	write(fd, &e, sizeof(struct input_event));
+}
+
 void InputHandler::Stop() {
 	running = false;
 	this->onExit();
@@ -47,10 +53,12 @@ void InputHandler::Stop() {
 
 void InputHandler::Update() {
 	struct input_event e;
+	
 	const int size = sizeof(e);
 	while (running) {
 		if (read(fd, &e, size) != size)
 			Kmswm::panic(1, "read()");
+		//printf("t= %d v=%d c=%d\n", e.type, e.value, e.code);
 		if (e.type != EV_KEY)
 			continue;
 		assert(e.code < KEYMAP_SIZE);

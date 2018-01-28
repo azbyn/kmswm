@@ -1,17 +1,20 @@
 #include <stdio.h>
 #include <assert.h>
+#include <linux/input-event-codes.h>
 
 #include <stdexcept>
+
+#include "input_handler.h"
 
 #include "keymaps.h"
 
 namespace Kmswm {
 
 KeymapStack::KeymapStack(
-		std::function<void()> exit,
+		InputHandler *inputHandler,
 		std::vector<Keymap> keymaps,
 		KeymapIndex defaultKeymap/* = 0*/) :
-			exit(exit), keymaps(keymaps) {
+			inputHandler(inputHandler), keymaps(keymaps) {
 
 	static_assert(KEYMAP_STACK_SIZE >= 2);// KEYMAP_STACK_SIZE must be greater than 2
 	nodes = new Node[KEYMAP_STACK_SIZE];
@@ -34,7 +37,10 @@ KeymapStack::~KeymapStack() {
 	delete[] nodes;
 }
 void KeymapStack::Exit() {
-	this->exit();
+	inputHandler->Stop();
+}
+void KeymapStack::SetLed(uint16_t led, bool value) {
+	inputHandler->Write(EV_LED, led, value);
 }
 
 void KeymapStack::Pop() {
@@ -49,7 +55,6 @@ void KeymapStack::Pop(KeymapIndex index) {
 KeymapIndex KeymapStack::Top() {
 	return node->value;
 }
-
 
 void KeymapStack::Push(KeymapIndex km) {
 	if (!node->next)

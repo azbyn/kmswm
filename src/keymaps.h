@@ -26,10 +26,15 @@ typedef int KeymapIndex;
 
 class KeymapStack {
 public:
-	KeymapStack(std::function<void()> exit, std::vector<Keymap> keymaps, KeymapIndex defaultKeymap = 0);
+	KeymapStack(
+			class InputHandler *ih,
+			std::vector<Keymap> keymaps,
+			KeymapIndex defaultKeymap = 0);
 
 	~KeymapStack();
 	void Exit();
+	void SetLed(uint16_t led, bool value);
+
 	void Pop();
 	void Pop(KeymapIndex index);
 	void Push(KeymapIndex index);
@@ -48,7 +53,7 @@ private:
 	};
 	Node *nodes;
 	Node *node;
-	std::function<void()> exit;
+	class InputHandler *inputHandler;
 	std::vector<Keymap> keymaps;//keep track of keymaps and handle memory for them
 };
 }//namespace Kmswm

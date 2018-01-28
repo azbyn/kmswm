@@ -12,12 +12,18 @@ enum Keymaps : KeymapIndex {
 	CAPS,
 	ANTICAPS,
 	SHIFT,
-
+	/*CTRL,
+	ALT,
+	SUPER, //aka META
+	ALTGR,
+	COMPOSE,
+	*/
+	
 	MAX_KM,
 };
 
 #define SEND_CHR(_char) putchar(_char)
-#define SEND_STR(_str) fputs(stdout, _str)
+#define SEND_STR(_str) fputs(_str, stdout)
 
 #define SETFUNC_(_km, _key) keymaps[_km][_key].down = [](KeymapStack *)
 #define SET_FUNC(_ks, _key, _ev, _km, _impl) \
@@ -58,9 +64,11 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 		keymaps.push_back(Keymap());
 	
 	SET_FUNC(ks, KEY_CAPSLOCK, down, NORMAL, {
+			ks->SetLed(LED_CAPSL, true);
 			ks->Push(CAPS);
 		});
 	SET_FUNC(ks, KEY_CAPSLOCK, down, CAPS, {
+			ks->SetLed(LED_CAPSL, false);
 			ks->Pop(CAPS);
 		});
 
@@ -135,16 +143,37 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 	SET_SHIFT(, KEY_SLASH,      { SEND_CHR('/'); }, { SEND_CHR('?'); });
 	SET_SHIFT(, KEY_GRAVE,      { SEND_CHR('`'); }, { SEND_CHR('~'); });
 
+	SET_NORMAL(, KEY_RESERVED,  { SEND_STR("<reserved>"); });
+	SET_NORMAL(, KEY_BACKSPACE, { SEND_STR("<bs>"); });
+
+	SET_NORMAL(, KEY_KPASTERISK, { SEND_CHR('*'); });
+	SET_NORMAL(, KEY_KPMINUS,    { SEND_CHR('-'); });
+	SET_NORMAL(, KEY_KPPLUS,     { SEND_CHR('+'); });
+	SET_NORMAL(, KEY_KPMINUS,    { SEND_CHR('-'); });
+	SET_NORMAL(, KEY_KPDOT,      { SEND_CHR('.'); });
+	SET_NORMAL(, KEY_KPSLASH,    { SEND_CHR('/'); });
+	SET_NORMAL(, KEY_KPENTER,    { SEND_CHR('\n'); });
+
+	SET_NORMAL(, KEY_KP7, { SEND_CHR('7'); });
+	SET_NORMAL(, KEY_KP8, { SEND_CHR('8'); });
+	SET_NORMAL(, KEY_KP9, { SEND_CHR('9'); });
+	SET_NORMAL(, KEY_KP4, { SEND_CHR('4'); });
+	SET_NORMAL(, KEY_KP5, { SEND_CHR('5'); });
+	SET_NORMAL(, KEY_KP6, { SEND_CHR('6'); });
+	SET_NORMAL(, KEY_KP1, { SEND_CHR('1'); });
+	SET_NORMAL(, KEY_KP2, { SEND_CHR('2'); });
+	SET_NORMAL(, KEY_KP3, { SEND_CHR('3'); });
+	SET_NORMAL(, KEY_KP0, { SEND_CHR('0'); });
+
 	//not implemented
 
-	SETFUNC_(NORMAL, KEY_RESERVED) { printf("reserved"); };
-	SETFUNC_(NORMAL, KEY_BACKSPACE) { printf("<bs>"); };
+	SETFUNC_(NORMAL, KEY_LEFTCTRL) { printf("<l-ctrl>"); };
+	SETFUNC_(NORMAL, KEY_RIGHTCTRL) { printf("<r-ctrl>"); };
+	SETFUNC_(NORMAL, KEY_LEFTALT) { printf("<l-alt>"); };
+	SETFUNC_(NORMAL, KEY_RIGHTALT) { printf("<r-alt>"); };
+	SETFUNC_(NORMAL, KEY_LEFTMETA) { printf("<l-meta>"); };
+	SETFUNC_(NORMAL, KEY_RIGHTMETA) { printf("<r-meta>"); };
 
-
-	SETFUNC_(NORMAL, KEY_LEFTCTRL) { printf("l-ctrl"); };
-
-	SETFUNC_(NORMAL, KEY_KPASTERISK) { printf("kp-asterix"); };
-	SETFUNC_(NORMAL, KEY_LEFTALT) { printf("l-alt"); };
 	SETFUNC_(NORMAL, KEY_F1) { printf("F1"); };
 	SETFUNC_(NORMAL, KEY_F2) { printf("F2"); };
 	SETFUNC_(NORMAL, KEY_F3) { printf("F3"); };
@@ -157,30 +186,12 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 	SETFUNC_(NORMAL, KEY_F10) { printf("F10"); };
 	SETFUNC_(NORMAL, KEY_NUMLOCK) { printf("num-lock"); };
 	SETFUNC_(NORMAL, KEY_SCROLLLOCK) { printf("scroll-lock"); };
-	SETFUNC_(NORMAL, KEY_KP7) { printf("kp-7"); };
-	SETFUNC_(NORMAL, KEY_KP8) { printf("kp-8"); };
-	SETFUNC_(NORMAL, KEY_KP9) { printf("kp-9"); };
-	SETFUNC_(NORMAL, KEY_KPMINUS) { printf("kp-minus"); };
-	SETFUNC_(NORMAL, KEY_KP4) { printf("kp-4"); };
-	SETFUNC_(NORMAL, KEY_KP5) { printf("kp-5"); };
-	SETFUNC_(NORMAL, KEY_KP6) { printf("kp-6"); };
-	SETFUNC_(NORMAL, KEY_KPPLUS) { printf("kp-plus"); };
-	SETFUNC_(NORMAL, KEY_KP1) { printf("kp-1"); };
-	SETFUNC_(NORMAL, KEY_KP2) { printf("kp-2"); };
-	SETFUNC_(NORMAL, KEY_KP3) { printf("kp-3"); };
-	SETFUNC_(NORMAL, KEY_KP0) { printf("kp-0"); };
-	SETFUNC_(NORMAL, KEY_KPDOT) { printf("kp-dot"); };
 
 	SETFUNC_(NORMAL, KEY_102ND) { printf("102ND"); };
 	SETFUNC_(NORMAL, KEY_F11) { printf("F11"); };
 	SETFUNC_(NORMAL, KEY_F12) { printf("F12"); };
 
-	SETFUNC_(NORMAL, KEY_KPENTER) { printf("kp-enter"); };
-	SETFUNC_(NORMAL, KEY_RIGHTCTRL) { printf("r-ctrl"); };
-	SETFUNC_(NORMAL, KEY_KPSLASH) { printf("kp-slash"); };
 	SETFUNC_(NORMAL, KEY_SYSRQ) { printf("sys-rq"); };
-	SETFUNC_(NORMAL, KEY_RIGHTALT) { printf("r-alt"); };
-	SETFUNC_(NORMAL, KEY_LINEFEED) { printf("lf"); };
 	SETFUNC_(NORMAL, KEY_HOME) { printf("home"); };
 	SETFUNC_(NORMAL, KEY_UP) { printf("up"); };
 	SETFUNC_(NORMAL, KEY_PAGEUP) { printf("page-up"); };
@@ -191,17 +202,11 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 	SETFUNC_(NORMAL, KEY_PAGEDOWN) { printf("page-down"); };
 	SETFUNC_(NORMAL, KEY_INSERT) { printf("insert"); };
 	SETFUNC_(NORMAL, KEY_DELETE) { printf("delete"); };
-	SETFUNC_(NORMAL, KEY_KPEQUAL) { printf("kp-equal"); };
-	SETFUNC_(NORMAL, KEY_KPPLUSMINUS) { printf("kp-plus-minus"); };
 	SETFUNC_(NORMAL, KEY_PAUSE) { printf("pause"); };
-
-	SETFUNC_(NORMAL, KEY_LEFTMETA) { printf("l-meta"); };
-	SETFUNC_(NORMAL, KEY_RIGHTMETA) { printf("r-meta"); };
 
 	SETFUNC_(NORMAL, KEY_COMPOSE) { printf("compose"); };
 	
-	return KeymapStack([this] { Stop(); },keymaps);
-
+	return KeymapStack(this, keymaps);
 }
 } // namespace Kmswm
 
