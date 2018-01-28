@@ -4,8 +4,6 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
-#include <xf86drm.h>
-#include <xf86drmMode.h>
 
 #include <iostream>
 

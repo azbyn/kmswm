@@ -20,11 +20,6 @@
 namespace Kmswm {
 InputHandler::InputHandler(const char *devicePath, void (*onExit) (void)) :
 		keymapStack(GenenerateKeymapStack()) {
-	//printf("l\n");
-	//keymapStack = GenenerateKeymapStack();
-	((keymapStack.Top())[KEY_ESC])(nullptr);
-
-
 	running = true;
 	this->onExit = onExit;
 	this->fd = open(devicePath, O_RDONLY);
@@ -36,7 +31,6 @@ InputHandler::InputHandler(const char *devicePath, void (*onExit) (void)) :
 	ioctl(fd, EVIOCGNAME(sizeof(name)), name);
 	printf("Reading from %s (%s)\n", devicePath, name);
 	
-	//this->Update();
 	thread = std::thread(&InputHandler::Update, this);
 }
 InputHandler::~InputHandler() {
@@ -59,24 +53,26 @@ void InputHandler::Update() {
 		if (e.type != EV_KEY)
 			continue;
 		assert(e.code < KEYMAP_SIZE);
-		std::string msg;
+
 		switch (e.value) {
 		case KEY_VAL_UP:
-			msg = "up";
+			//printf("up c=%d:\n", e.code);
 			if (e.code == KEY_ESC) {
 				this->onExit();
 				return;
 			}
+			keymapStack.ReleaseKey(e.code);
 			break;
 		case KEY_VAL_DOWN:
-			msg = "down";
+			//printf("down c=%d:", e.code);
+			keymapStack.PressKey(e.code);
 			break;
 		case KEY_VAL_HOLD:
-			continue;
+			keymapStack.HoldKey(e.code);
+			break;
 		}
-		printf("%s c=%d:", msg.c_str(), e.code);
-		keymapStack.PressKey(e.code);
-		putchar('\n');
+		fflush(stdout);
+
 	}
 }
 

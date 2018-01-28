@@ -8,7 +8,7 @@
 namespace Kmswm {
 KeymapStack::KeymapStack() {
 }
-KeymapStack::KeymapStack(std::vector<Keymap> keymaps, size_t defaultKeymap/* = 0*/) :
+KeymapStack::KeymapStack(std::vector<Keymap> keymaps, KeymapIndex defaultKeymap/* = 0*/) :
 		keymaps(keymaps) {
 
 	static_assert(KEYMAP_STACK_SIZE >= 2);// KEYMAP_STACK_SIZE must be greater than 2
@@ -25,7 +25,7 @@ KeymapStack::KeymapStack(std::vector<Keymap> keymaps, size_t defaultKeymap/* = 0
 	nodes[KEYMAP_STACK_SIZE-1].next = nullptr;
 
 	node = nodes;
-	node->value = keymaps[defaultKeymap];
+	node->value = defaultKeymap;
 	node->used = true;
 }
 KeymapStack::~KeymapStack() {
@@ -37,27 +37,40 @@ void KeymapStack::Pop() {
 	node->used = false;
 	node = node->prev;
 }
-void KeymapStack::Push(const Keymap& val) {
+void KeymapStack::Pop(KeymapIndex index) {
+	if (node->value == index)
+		Pop();
+}
+
+void KeymapStack::Push(KeymapIndex km) {
 	if (!node->next)
 		throw std::out_of_range("KeymapStack Out of range, you might want to increase KEYMAP_STACK_SIZE");
 	node = node->next;
 	node->used = true;
-	node->value = val;
+	node->value = km;
 }
-const Keymap& KeymapStack::Top() {
-	return node->value;
-}
-void KeymapStack::PressKey(Key key) {
-	Node *n = node;
-	KeyAction fun;
-	while (n) {
-		fun = n->value[key];
-		if (fun) {
-			fun(this);
-			return;
-		}
-		n = n->prev;
+#define _PRESS_KEY_IMPL(_val) \
+	Node *n = node; \
+	KeyAction fun; \
+	while (n) { \
+		fun = keymaps[n->value][key]. _val; \
+		if (fun) { \
+			fun(this); \
+			return; \
+		} \
+		n = n->prev; \
 	}
+
+
+void KeymapStack::PressKey(Key key) {
+	_PRESS_KEY_IMPL(down);
 }
+void KeymapStack::HoldKey(Key key) {
+	_PRESS_KEY_IMPL(up);
+}
+void KeymapStack::ReleaseKey(Key key) {
+	_PRESS_KEY_IMPL(hold);
+}
+
 }//namespace Kmswm
 

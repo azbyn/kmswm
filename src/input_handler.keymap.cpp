@@ -7,124 +7,159 @@
 
 namespace Kmswm {
 
-#define SET_FUNC(_key) keymaps[0][_key] = [](const KeymapStack *)
+enum Keymaps : KeymapIndex {
+	NORMAL,
+	CAPS,
+	SHIFT,
+
+	MAX_KM,
+};
+
+#define SETFUNC_(_km, _key) keymaps[_km][_key].down = [](KeymapStack *)
+#define SET_FUNC(_ks, _key, _ev, _km, _impl) \
+	keymaps[_km][_key]. _ev = [](KeymapStack *_ks) _impl
+
+#define SET_CAPS(_ks, _key, _nrm, _caps) \
+	keymaps[NORMAL][_key].down = [](KeymapStack * const _ks) _nrm; \
+	keymaps[CAPS][_key].down = [](KeymapStack * const _ks) _caps; \
+	keymaps[NORMAL][_key].hold = [](KeymapStack * const _ks) _nrm; \
+	keymaps[CAPS][_key].hold = [](KeymapStack * const _ks) _caps; \
+
+
 KeymapStack InputHandler::GenenerateKeymapStack() {
 	std::vector<Keymap> keymaps;
-	keymaps.push_back(Keymap());//size_t normal = 0;
+	for (KeymapIndex i = 0; i < MAX_KM; ++i)
+		keymaps.push_back(Keymap());
+	
+	SET_FUNC(ks, KEY_CAPSLOCK, down, NORMAL, {
+			printf("<caps-on>");
+			ks->Push(CAPS);
+		});
+	SET_FUNC(ks, KEY_CAPSLOCK, down, CAPS, {
+			printf("<caps-off>");
+			ks->Pop(CAPS);
+		});
 
-	SET_FUNC(KEY_RESERVED) { printf("reserved"); };
-	SET_FUNC(KEY_ESC) { printf("Esc"); };
-	SET_FUNC(KEY_1) { printf("1"); };
-	SET_FUNC(KEY_2) { printf("2"); };
-	SET_FUNC(KEY_3) { printf("3"); };
-	SET_FUNC(KEY_4) { printf("4"); };
-	SET_FUNC(KEY_5) { printf("5"); };
-	SET_FUNC(KEY_6) { printf("6"); };
-	SET_FUNC(KEY_7) { printf("7"); };
-	SET_FUNC(KEY_8) { printf("8"); };
-	SET_FUNC(KEY_9) { printf("9"); };
-	SET_FUNC(KEY_0) { printf("0"); };
-	SET_FUNC(KEY_MINUS) { printf("minus"); };
-	SET_FUNC(KEY_EQUAL) { printf("equal"); };
-	SET_FUNC(KEY_BACKSPACE) { printf("backspace"); };
-	SET_FUNC(KEY_TAB) { printf("tab"); };
-	SET_FUNC(KEY_Q) { printf("Q"); };
-	SET_FUNC(KEY_W) { printf("W"); };
-	SET_FUNC(KEY_E) { printf("E"); };
-	SET_FUNC(KEY_R) { printf("R"); };
-	SET_FUNC(KEY_T) { printf("T"); };
-	SET_FUNC(KEY_Y) { printf("Y"); };
-	SET_FUNC(KEY_U) { printf("U"); };
-	SET_FUNC(KEY_I) { printf("I"); };
-	SET_FUNC(KEY_O) { printf("O"); };
-	SET_FUNC(KEY_P) { printf("P"); };
-	SET_FUNC(KEY_LEFTBRACE) { printf("["); };
-	SET_FUNC(KEY_RIGHTBRACE) { printf("]"); };
-	SET_FUNC(KEY_ENTER) { printf("enter"); };
-	SET_FUNC(KEY_LEFTCTRL) { printf("l-ctrl"); };
-	SET_FUNC(KEY_A) { printf("A"); };
-	SET_FUNC(KEY_S) { printf("S"); };
-	SET_FUNC(KEY_D) { printf("D"); };
-	SET_FUNC(KEY_F) { printf("F"); };
-	SET_FUNC(KEY_G) { printf("G"); };
-	SET_FUNC(KEY_H) { printf("H"); };
-	SET_FUNC(KEY_J) { printf("J"); };
-	SET_FUNC(KEY_K) { printf("K"); };
-	SET_FUNC(KEY_L) { printf("L"); };
-	SET_FUNC(KEY_SEMICOLON) { printf(";"); };
-	SET_FUNC(KEY_APOSTROPHE) { printf("'"); };
-	SET_FUNC(KEY_GRAVE) { printf("~"); };
-	SET_FUNC(KEY_LEFTSHIFT) { printf("l-shift"); };
-	SET_FUNC(KEY_BACKSLASH) { printf("\\"); };
-	SET_FUNC(KEY_Z) { printf("Z"); };
-	SET_FUNC(KEY_X) { printf("X"); };
-	SET_FUNC(KEY_C) { printf("C"); };
-	SET_FUNC(KEY_V) { printf("V"); };
-	SET_FUNC(KEY_B) { printf("B"); };
-	SET_FUNC(KEY_N) { printf("N"); };
-	SET_FUNC(KEY_M) { printf("M"); };
-	SET_FUNC(KEY_COMMA) { printf(","); };
-	SET_FUNC(KEY_DOT) { printf("."); };
-	SET_FUNC(KEY_SLASH) { printf("/"); };
-	SET_FUNC(KEY_RIGHTSHIFT) { printf("r-shift"); };
-	SET_FUNC(KEY_KPASTERISK) { printf("kp-asterix"); };
-	SET_FUNC(KEY_LEFTALT) { printf("l-alt"); };
-	SET_FUNC(KEY_SPACE) { printf("space"); };
-	SET_FUNC(KEY_CAPSLOCK) { printf("caps"); };
-	SET_FUNC(KEY_F1) { printf("F1"); };
-	SET_FUNC(KEY_F2) { printf("F2"); };
-	SET_FUNC(KEY_F3) { printf("F3"); };
-	SET_FUNC(KEY_F4) { printf("F4"); };
-	SET_FUNC(KEY_F5) { printf("F5"); };
-	SET_FUNC(KEY_F6) { printf("F6"); };
-	SET_FUNC(KEY_F7) { printf("F7"); };
-	SET_FUNC(KEY_F8) { printf("F8"); };
-	SET_FUNC(KEY_F9) { printf("F9"); };
-	SET_FUNC(KEY_F10) { printf("F10"); };
-	SET_FUNC(KEY_NUMLOCK) { printf("num-lock"); };
-	SET_FUNC(KEY_SCROLLLOCK) { printf("scroll-lock"); };
-	SET_FUNC(KEY_KP7) { printf("kp-7"); };
-	SET_FUNC(KEY_KP8) { printf("kp-8"); };
-	SET_FUNC(KEY_KP9) { printf("kp-9"); };
-	SET_FUNC(KEY_KPMINUS) { printf("kp-minus"); };
-	SET_FUNC(KEY_KP4) { printf("kp-4"); };
-	SET_FUNC(KEY_KP5) { printf("kp-5"); };
-	SET_FUNC(KEY_KP6) { printf("kp-6"); };
-	SET_FUNC(KEY_KPPLUS) { printf("kp-plus"); };
-	SET_FUNC(KEY_KP1) { printf("kp-1"); };
-	SET_FUNC(KEY_KP2) { printf("kp-2"); };
-	SET_FUNC(KEY_KP3) { printf("kp-3"); };
-	SET_FUNC(KEY_KP0) { printf("kp-0"); };
-	SET_FUNC(KEY_KPDOT) { printf("kp-dot"); };
+	
+	SET_CAPS(, KEY_Q, { putchar('q'); }, { putchar('Q'); });
+	SET_CAPS(, KEY_W, { putchar('w'); }, { putchar('W'); });
+	SET_CAPS(, KEY_E, { putchar('e'); }, { putchar('E'); });
+	SET_CAPS(, KEY_R, { putchar('r'); }, { putchar('R'); });
+	SET_CAPS(, KEY_T, { putchar('t'); }, { putchar('T'); });
+	SET_CAPS(, KEY_Y, { putchar('y'); }, { putchar('Y'); });
+	SET_CAPS(, KEY_U, { putchar('u'); }, { putchar('U'); });
+	SET_CAPS(, KEY_I, { putchar('i'); }, { putchar('I'); });
+	SET_CAPS(, KEY_O, { putchar('o'); }, { putchar('O'); });
+	SET_CAPS(, KEY_P, { putchar('p'); }, { putchar('P'); });
+	SET_CAPS(, KEY_A, { putchar('a'); }, { putchar('A'); });
+	SET_CAPS(, KEY_S, { putchar('s'); }, { putchar('S'); });
+	SET_CAPS(, KEY_D, { putchar('d'); }, { putchar('D'); });
+	SET_CAPS(, KEY_F, { putchar('f'); }, { putchar('F'); });
+	SET_CAPS(, KEY_G, { putchar('g'); }, { putchar('G'); });
+	SET_CAPS(, KEY_H, { putchar('h'); }, { putchar('H'); });
+	SET_CAPS(, KEY_J, { putchar('j'); }, { putchar('J'); });
+	SET_CAPS(, KEY_K, { putchar('k'); }, { putchar('K'); });
+	SET_CAPS(, KEY_L, { putchar('l'); }, { putchar('L'); });
+	SET_CAPS(, KEY_Z, { putchar('z'); }, { putchar('Z'); });
+	SET_CAPS(, KEY_X, { putchar('x'); }, { putchar('X'); });
+	SET_CAPS(, KEY_C, { putchar('c'); }, { putchar('C'); });
+	SET_CAPS(, KEY_V, { putchar('v'); }, { putchar('V'); });
+	SET_CAPS(, KEY_B, { putchar('b'); }, { putchar('B'); });
+	SET_CAPS(, KEY_N, { putchar('n'); }, { putchar('N'); });
+	SET_CAPS(, KEY_M, { putchar('m'); }, { putchar('M'); });
 
-	SET_FUNC(KEY_102ND) { printf("102ND"); };
-	SET_FUNC(KEY_F11) { printf("F11"); };
-	SET_FUNC(KEY_F12) { printf("F12"); };
 
-	SET_FUNC(KEY_KPENTER) { printf("kp-enter"); };
-	SET_FUNC(KEY_RIGHTCTRL) { printf("r-ctrl"); };
-	SET_FUNC(KEY_KPSLASH) { printf("kp-slash"); };
-	SET_FUNC(KEY_SYSRQ) { printf("sys-rq"); };
-	SET_FUNC(KEY_RIGHTALT) { printf("r-alt"); };
-	SET_FUNC(KEY_LINEFEED) { printf("lf"); };
-	SET_FUNC(KEY_HOME) { printf("home"); };
-	SET_FUNC(KEY_UP) { printf("up"); };
-	SET_FUNC(KEY_PAGEUP) { printf("page-up"); };
-	SET_FUNC(KEY_LEFT) { printf("left"); };
-	SET_FUNC(KEY_RIGHT) { printf("right"); };
-	SET_FUNC(KEY_END) { printf("end"); };
-	SET_FUNC(KEY_DOWN) { printf("down"); };
-	SET_FUNC(KEY_PAGEDOWN) { printf("page-down"); };
-	SET_FUNC(KEY_INSERT) { printf("insert"); };
-	SET_FUNC(KEY_DELETE) { printf("delete"); };
-	SET_FUNC(KEY_KPEQUAL) { printf("kp-equal"); };
-	SET_FUNC(KEY_KPPLUSMINUS) { printf("kp-plus-minus"); };
-	SET_FUNC(KEY_PAUSE) { printf("pause"); };
 
-	SET_FUNC(KEY_LEFTMETA) { printf("l-meta"); };
-	SET_FUNC(KEY_RIGHTMETA) { printf("r-meta"); };
 
-	SET_FUNC(KEY_COMPOSE) { printf("compose"); };
+
+	//not implemented
+
+	SETFUNC_(NORMAL, KEY_RESERVED) { printf("reserved"); };
+	SETFUNC_(NORMAL, KEY_ESC) { printf("Esc"); };
+	SETFUNC_(NORMAL, KEY_1) { printf("1"); };
+	SETFUNC_(NORMAL, KEY_2) { printf("2"); };
+	SETFUNC_(NORMAL, KEY_3) { printf("3"); };
+	SETFUNC_(NORMAL, KEY_4) { printf("4"); };
+	SETFUNC_(NORMAL, KEY_5) { printf("5"); };
+	SETFUNC_(NORMAL, KEY_6) { printf("6"); };
+	SETFUNC_(NORMAL, KEY_7) { printf("7"); };
+	SETFUNC_(NORMAL, KEY_8) { printf("8"); };
+	SETFUNC_(NORMAL, KEY_9) { printf("9"); };
+	SETFUNC_(NORMAL, KEY_0) { printf("0"); };
+	SETFUNC_(NORMAL, KEY_MINUS) { printf("minus"); };
+	SETFUNC_(NORMAL, KEY_EQUAL) { printf("equal"); };
+	SETFUNC_(NORMAL, KEY_BACKSPACE) { printf("backspace"); };
+	SETFUNC_(NORMAL, KEY_TAB) { printf("tab"); };
+	SETFUNC_(NORMAL, KEY_LEFTBRACE) { printf("["); };
+	SETFUNC_(NORMAL, KEY_RIGHTBRACE) { printf("]"); };
+	SETFUNC_(NORMAL, KEY_ENTER) { printf("enter"); };
+	SETFUNC_(NORMAL, KEY_LEFTCTRL) { printf("l-ctrl"); };
+	SETFUNC_(NORMAL, KEY_SEMICOLON) { printf(";"); };
+	SETFUNC_(NORMAL, KEY_APOSTROPHE) { printf("'"); };
+	SETFUNC_(NORMAL, KEY_GRAVE) { printf("~"); };
+	SETFUNC_(NORMAL, KEY_LEFTSHIFT) { printf("l-shift"); };
+	SETFUNC_(NORMAL, KEY_BACKSLASH) { printf("\\"); };
+	SETFUNC_(NORMAL, KEY_COMMA) { printf(","); };
+	SETFUNC_(NORMAL, KEY_DOT) { printf("."); };
+	SETFUNC_(NORMAL, KEY_SLASH) { printf("/"); };
+	SETFUNC_(NORMAL, KEY_RIGHTSHIFT) { printf("r-shift"); };
+	SETFUNC_(NORMAL, KEY_KPASTERISK) { printf("kp-asterix"); };
+	SETFUNC_(NORMAL, KEY_LEFTALT) { printf("l-alt"); };
+	SETFUNC_(NORMAL, KEY_SPACE) { printf("space"); };
+	SETFUNC_(NORMAL, KEY_F1) { printf("F1"); };
+	SETFUNC_(NORMAL, KEY_F2) { printf("F2"); };
+	SETFUNC_(NORMAL, KEY_F3) { printf("F3"); };
+	SETFUNC_(NORMAL, KEY_F4) { printf("F4"); };
+	SETFUNC_(NORMAL, KEY_F5) { printf("F5"); };
+	SETFUNC_(NORMAL, KEY_F6) { printf("F6"); };
+	SETFUNC_(NORMAL, KEY_F7) { printf("F7"); };
+	SETFUNC_(NORMAL, KEY_F8) { printf("F8"); };
+	SETFUNC_(NORMAL, KEY_F9) { printf("F9"); };
+	SETFUNC_(NORMAL, KEY_F10) { printf("F10"); };
+	SETFUNC_(NORMAL, KEY_NUMLOCK) { printf("num-lock"); };
+	SETFUNC_(NORMAL, KEY_SCROLLLOCK) { printf("scroll-lock"); };
+	SETFUNC_(NORMAL, KEY_KP7) { printf("kp-7"); };
+	SETFUNC_(NORMAL, KEY_KP8) { printf("kp-8"); };
+	SETFUNC_(NORMAL, KEY_KP9) { printf("kp-9"); };
+	SETFUNC_(NORMAL, KEY_KPMINUS) { printf("kp-minus"); };
+	SETFUNC_(NORMAL, KEY_KP4) { printf("kp-4"); };
+	SETFUNC_(NORMAL, KEY_KP5) { printf("kp-5"); };
+	SETFUNC_(NORMAL, KEY_KP6) { printf("kp-6"); };
+	SETFUNC_(NORMAL, KEY_KPPLUS) { printf("kp-plus"); };
+	SETFUNC_(NORMAL, KEY_KP1) { printf("kp-1"); };
+	SETFUNC_(NORMAL, KEY_KP2) { printf("kp-2"); };
+	SETFUNC_(NORMAL, KEY_KP3) { printf("kp-3"); };
+	SETFUNC_(NORMAL, KEY_KP0) { printf("kp-0"); };
+	SETFUNC_(NORMAL, KEY_KPDOT) { printf("kp-dot"); };
+
+	SETFUNC_(NORMAL, KEY_102ND) { printf("102ND"); };
+	SETFUNC_(NORMAL, KEY_F11) { printf("F11"); };
+	SETFUNC_(NORMAL, KEY_F12) { printf("F12"); };
+
+	SETFUNC_(NORMAL, KEY_KPENTER) { printf("kp-enter"); };
+	SETFUNC_(NORMAL, KEY_RIGHTCTRL) { printf("r-ctrl"); };
+	SETFUNC_(NORMAL, KEY_KPSLASH) { printf("kp-slash"); };
+	SETFUNC_(NORMAL, KEY_SYSRQ) { printf("sys-rq"); };
+	SETFUNC_(NORMAL, KEY_RIGHTALT) { printf("r-alt"); };
+	SETFUNC_(NORMAL, KEY_LINEFEED) { printf("lf"); };
+	SETFUNC_(NORMAL, KEY_HOME) { printf("home"); };
+	SETFUNC_(NORMAL, KEY_UP) { printf("up"); };
+	SETFUNC_(NORMAL, KEY_PAGEUP) { printf("page-up"); };
+	SETFUNC_(NORMAL, KEY_LEFT) { printf("left"); };
+	SETFUNC_(NORMAL, KEY_RIGHT) { printf("right"); };
+	SETFUNC_(NORMAL, KEY_END) { printf("end"); };
+	SETFUNC_(NORMAL, KEY_DOWN) { printf("down"); };
+	SETFUNC_(NORMAL, KEY_PAGEDOWN) { printf("page-down"); };
+	SETFUNC_(NORMAL, KEY_INSERT) { printf("insert"); };
+	SETFUNC_(NORMAL, KEY_DELETE) { printf("delete"); };
+	SETFUNC_(NORMAL, KEY_KPEQUAL) { printf("kp-equal"); };
+	SETFUNC_(NORMAL, KEY_KPPLUSMINUS) { printf("kp-plus-minus"); };
+	SETFUNC_(NORMAL, KEY_PAUSE) { printf("pause"); };
+
+	SETFUNC_(NORMAL, KEY_LEFTMETA) { printf("l-meta"); };
+	SETFUNC_(NORMAL, KEY_RIGHTMETA) { printf("r-meta"); };
+
+	SETFUNC_(NORMAL, KEY_COMPOSE) { printf("compose"); };
 	
 	printf("end-\n");
 	return KeymapStack(keymaps);
