@@ -19,7 +19,7 @@
 
 namespace Kmswm {
 InputHandler::InputHandler(const char *devicePath, void (*onExit) (void)) :
-		keymapStack(GenenerateKeymapStack()) {
+			keymapStack(GenenerateKeymapStack()) {
 	running = true;
 	this->onExit = onExit;
 	this->fd = open(devicePath, O_RDONLY);
@@ -42,6 +42,7 @@ void InputHandler::ThreadInit() {
 }
 void InputHandler::Stop() {
 	running = false;
+	this->onExit();
 }
 
 void InputHandler::Update() {
@@ -58,7 +59,6 @@ void InputHandler::Update() {
 		case KEY_VAL_UP:
 			//printf("up c=%d:\n", e.code);
 			if (e.code == KEY_ESC) {
-				this->onExit();
 				return;
 			}
 			keymapStack.ReleaseKey(e.code);

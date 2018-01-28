@@ -6,10 +6,12 @@
 #include "keymaps.h"
 
 namespace Kmswm {
-KeymapStack::KeymapStack() {
-}
-KeymapStack::KeymapStack(std::vector<Keymap> keymaps, KeymapIndex defaultKeymap/* = 0*/) :
-		keymaps(keymaps) {
+
+KeymapStack::KeymapStack(
+		std::function<void()> exit,
+		std::vector<Keymap> keymaps,
+		KeymapIndex defaultKeymap/* = 0*/) :
+			exit(exit), keymaps(keymaps) {
 
 	static_assert(KEYMAP_STACK_SIZE >= 2);// KEYMAP_STACK_SIZE must be greater than 2
 	nodes = new Node[KEYMAP_STACK_SIZE];
@@ -31,6 +33,9 @@ KeymapStack::KeymapStack(std::vector<Keymap> keymaps, KeymapIndex defaultKeymap/
 KeymapStack::~KeymapStack() {
 	delete[] nodes;
 }
+void KeymapStack::Exit() {
+	this->exit();
+}
 
 void KeymapStack::Pop() {
 	if (!node->prev) return;
@@ -41,6 +46,10 @@ void KeymapStack::Pop(KeymapIndex index) {
 	if (node->value == index)
 		Pop();
 }
+KeymapIndex KeymapStack::Top() {
+	return node->value;
+}
+
 
 void KeymapStack::Push(KeymapIndex km) {
 	if (!node->next)
@@ -66,10 +75,10 @@ void KeymapStack::PressKey(Key key) {
 	_PRESS_KEY_IMPL(down);
 }
 void KeymapStack::HoldKey(Key key) {
-	_PRESS_KEY_IMPL(up);
+	_PRESS_KEY_IMPL(hold);
 }
 void KeymapStack::ReleaseKey(Key key) {
-	_PRESS_KEY_IMPL(hold);
+	_PRESS_KEY_IMPL(up);
 }
 
 }//namespace Kmswm

@@ -21,7 +21,7 @@ private:
 	std::thread thread;
 	void Update();
 
-	static KeymapStack GenenerateKeymapStack();
+	KeymapStack GenenerateKeymapStack();
 
 };
 }// namespace Kmswm

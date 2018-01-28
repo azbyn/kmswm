@@ -10,20 +10,46 @@ namespace Kmswm {
 enum Keymaps : KeymapIndex {
 	NORMAL,
 	CAPS,
+	ANTICAPS,
 	SHIFT,
 
 	MAX_KM,
 };
 
+#define SEND_CHR(_char) putchar(_char)
+#define SEND_STR(_str) fputs(stdout, _str)
+
 #define SETFUNC_(_km, _key) keymaps[_km][_key].down = [](KeymapStack *)
 #define SET_FUNC(_ks, _key, _ev, _km, _impl) \
 	keymaps[_km][_key]. _ev = [](KeymapStack *_ks) _impl
 
+#define SET_DOWN(_ks, _key, _km, _impl) \
+	SET_FUNC(_ks, _key, down, _km, _impl)
+
+#define SET_NORMAL(_ks, _key, _impl) \
+	SET_FUNC(_ks, _key, down, NORMAL, _impl); \
+	SET_FUNC(_ks, _key, hold, NORMAL, _impl);
+
+
 #define SET_CAPS(_ks, _key, _nrm, _caps) \
-	keymaps[NORMAL][_key].down = [](KeymapStack * const _ks) _nrm; \
-	keymaps[CAPS][_key].down = [](KeymapStack * const _ks) _caps; \
-	keymaps[NORMAL][_key].hold = [](KeymapStack * const _ks) _nrm; \
-	keymaps[CAPS][_key].hold = [](KeymapStack * const _ks) _caps; \
+	SET_FUNC(_ks, _key, down, NORMAL, _nrm); \
+	SET_FUNC(_ks, _key, hold, NORMAL, _nrm); \
+	SET_FUNC(_ks, _key, down, ANTICAPS, _nrm); \
+	SET_FUNC(_ks, _key, hold, ANTICAPS, _nrm); \
+	SET_FUNC(_ks, _key, down, CAPS, _caps); \
+	SET_FUNC(_ks, _key, hold, CAPS, _caps);
+
+#define SET_SHIFT(_ks, _key, _nrm, _shift) \
+	SET_FUNC(_ks, _key, down, NORMAL, _nrm); \
+	SET_FUNC(_ks, _key, hold, NORMAL, _nrm); \
+	SET_FUNC(_ks, _key, down, SHIFT, _shift); \
+	SET_FUNC(_ks, _key, hold, SHIFT, _shift);
+
+
+
+#define SET_FUNC2(_ks, _key1, _key2, _ev, _km, _impl) \
+	SET_FUNC(_ks, _key1, _ev, _km, _impl); \
+	SET_FUNC(_ks, _key2, _ev, _km, _impl)
 
 
 KeymapStack InputHandler::GenenerateKeymapStack() {
@@ -32,80 +58,93 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 		keymaps.push_back(Keymap());
 	
 	SET_FUNC(ks, KEY_CAPSLOCK, down, NORMAL, {
-			printf("<caps-on>");
 			ks->Push(CAPS);
 		});
 	SET_FUNC(ks, KEY_CAPSLOCK, down, CAPS, {
-			printf("<caps-off>");
 			ks->Pop(CAPS);
 		});
 
-	
-	SET_CAPS(, KEY_Q, { putchar('q'); }, { putchar('Q'); });
-	SET_CAPS(, KEY_W, { putchar('w'); }, { putchar('W'); });
-	SET_CAPS(, KEY_E, { putchar('e'); }, { putchar('E'); });
-	SET_CAPS(, KEY_R, { putchar('r'); }, { putchar('R'); });
-	SET_CAPS(, KEY_T, { putchar('t'); }, { putchar('T'); });
-	SET_CAPS(, KEY_Y, { putchar('y'); }, { putchar('Y'); });
-	SET_CAPS(, KEY_U, { putchar('u'); }, { putchar('U'); });
-	SET_CAPS(, KEY_I, { putchar('i'); }, { putchar('I'); });
-	SET_CAPS(, KEY_O, { putchar('o'); }, { putchar('O'); });
-	SET_CAPS(, KEY_P, { putchar('p'); }, { putchar('P'); });
-	SET_CAPS(, KEY_A, { putchar('a'); }, { putchar('A'); });
-	SET_CAPS(, KEY_S, { putchar('s'); }, { putchar('S'); });
-	SET_CAPS(, KEY_D, { putchar('d'); }, { putchar('D'); });
-	SET_CAPS(, KEY_F, { putchar('f'); }, { putchar('F'); });
-	SET_CAPS(, KEY_G, { putchar('g'); }, { putchar('G'); });
-	SET_CAPS(, KEY_H, { putchar('h'); }, { putchar('H'); });
-	SET_CAPS(, KEY_J, { putchar('j'); }, { putchar('J'); });
-	SET_CAPS(, KEY_K, { putchar('k'); }, { putchar('K'); });
-	SET_CAPS(, KEY_L, { putchar('l'); }, { putchar('L'); });
-	SET_CAPS(, KEY_Z, { putchar('z'); }, { putchar('Z'); });
-	SET_CAPS(, KEY_X, { putchar('x'); }, { putchar('X'); });
-	SET_CAPS(, KEY_C, { putchar('c'); }, { putchar('C'); });
-	SET_CAPS(, KEY_V, { putchar('v'); }, { putchar('V'); });
-	SET_CAPS(, KEY_B, { putchar('b'); }, { putchar('B'); });
-	SET_CAPS(, KEY_N, { putchar('n'); }, { putchar('N'); });
-	SET_CAPS(, KEY_M, { putchar('m'); }, { putchar('M'); });
+	SET_FUNC2(ks, KEY_RIGHTSHIFT, KEY_LEFTSHIFT, down, NORMAL, {
+			ks->Push(CAPS); ks->Push(SHIFT);
+		});
+	SET_FUNC2(ks, KEY_RIGHTSHIFT, KEY_LEFTSHIFT, down, CAPS, {
+			ks->Push(ANTICAPS); ks->Push(SHIFT);
+		});
+	SET_FUNC2(ks, KEY_RIGHTSHIFT, KEY_LEFTSHIFT, up, SHIFT, {
+			ks->Pop(SHIFT);
+			auto top = ks->Top();
+			if (top == CAPS || top == ANTICAPS)
+				ks->Pop();
+		});
+	SET_FUNC2(ks, KEY_RIGHTSHIFT, KEY_LEFTSHIFT, down, SHIFT, {
+			ks->Push(SHIFT);
+		});
 
+	SET_NORMAL(, KEY_SPACE, { SEND_CHR(' '); });
+	SET_NORMAL(, KEY_ENTER, { SEND_CHR('\n'); });
+	SET_NORMAL(, KEY_TAB,   { SEND_CHR('\t'); });
 
+	SET_DOWN(ks, KEY_ESC, NORMAL, { ks->Exit(); });
 
+	SET_CAPS(, KEY_Q, { SEND_CHR('q'); }, { SEND_CHR('Q'); });
+	SET_CAPS(, KEY_W, { SEND_CHR('w'); }, { SEND_CHR('W'); });
+	SET_CAPS(, KEY_E, { SEND_CHR('e'); }, { SEND_CHR('E'); });
+	SET_CAPS(, KEY_R, { SEND_CHR('r'); }, { SEND_CHR('R'); });
+	SET_CAPS(, KEY_T, { SEND_CHR('t'); }, { SEND_CHR('T'); });
+	SET_CAPS(, KEY_Y, { SEND_CHR('y'); }, { SEND_CHR('Y'); });
+	SET_CAPS(, KEY_U, { SEND_CHR('u'); }, { SEND_CHR('U'); });
+	SET_CAPS(, KEY_I, { SEND_CHR('i'); }, { SEND_CHR('I'); });
+	SET_CAPS(, KEY_O, { SEND_CHR('o'); }, { SEND_CHR('O'); });
+	SET_CAPS(, KEY_P, { SEND_CHR('p'); }, { SEND_CHR('P'); });
+	SET_CAPS(, KEY_A, { SEND_CHR('a'); }, { SEND_CHR('A'); });
+	SET_CAPS(, KEY_S, { SEND_CHR('s'); }, { SEND_CHR('S'); });
+	SET_CAPS(, KEY_D, { SEND_CHR('d'); }, { SEND_CHR('D'); });
+	SET_CAPS(, KEY_F, { SEND_CHR('f'); }, { SEND_CHR('F'); });
+	SET_CAPS(, KEY_G, { SEND_CHR('g'); }, { SEND_CHR('G'); });
+	SET_CAPS(, KEY_H, { SEND_CHR('h'); }, { SEND_CHR('H'); });
+	SET_CAPS(, KEY_J, { SEND_CHR('j'); }, { SEND_CHR('J'); });
+	SET_CAPS(, KEY_K, { SEND_CHR('k'); }, { SEND_CHR('K'); });
+	SET_CAPS(, KEY_L, { SEND_CHR('l'); }, { SEND_CHR('L'); });
+	SET_CAPS(, KEY_Z, { SEND_CHR('z'); }, { SEND_CHR('Z'); });
+	SET_CAPS(, KEY_X, { SEND_CHR('x'); }, { SEND_CHR('X'); });
+	SET_CAPS(, KEY_C, { SEND_CHR('c'); }, { SEND_CHR('C'); });
+	SET_CAPS(, KEY_V, { SEND_CHR('v'); }, { SEND_CHR('V'); });
+	SET_CAPS(, KEY_B, { SEND_CHR('b'); }, { SEND_CHR('B'); });
+	SET_CAPS(, KEY_N, { SEND_CHR('n'); }, { SEND_CHR('N'); });
+	SET_CAPS(, KEY_M, { SEND_CHR('m'); }, { SEND_CHR('M'); });
 
+	SET_SHIFT(, KEY_1, { SEND_CHR('1'); }, { SEND_CHR('!'); });
+	SET_SHIFT(, KEY_2, { SEND_CHR('2'); }, { SEND_CHR('@'); });
+	SET_SHIFT(, KEY_3, { SEND_CHR('3'); }, { SEND_CHR('#'); });
+	SET_SHIFT(, KEY_4, { SEND_CHR('4'); }, { SEND_CHR('$'); });
+	SET_SHIFT(, KEY_5, { SEND_CHR('5'); }, { SEND_CHR('%'); });
+	SET_SHIFT(, KEY_6, { SEND_CHR('6'); }, { SEND_CHR('^'); });
+	SET_SHIFT(, KEY_7, { SEND_CHR('7'); }, { SEND_CHR('&'); });
+	SET_SHIFT(, KEY_8, { SEND_CHR('8'); }, { SEND_CHR('*'); });
+	SET_SHIFT(, KEY_9, { SEND_CHR('9'); }, { SEND_CHR('('); });
+	SET_SHIFT(, KEY_0, { SEND_CHR('0'); }, { SEND_CHR(')'); });
+	SET_SHIFT(, KEY_MINUS,      { SEND_CHR('-'); }, { SEND_CHR('_'); });
+	SET_SHIFT(, KEY_EQUAL,      { SEND_CHR('='); }, { SEND_CHR('+'); });
+	SET_SHIFT(, KEY_LEFTBRACE,  { SEND_CHR('['); }, { SEND_CHR('{'); });
+	SET_SHIFT(, KEY_RIGHTBRACE, { SEND_CHR(']'); }, { SEND_CHR('}'); });
+	SET_SHIFT(, KEY_SEMICOLON,  { SEND_CHR(';'); }, { SEND_CHR(':'); });
+	SET_SHIFT(, KEY_APOSTROPHE, { SEND_CHR('\''); }, { SEND_CHR('"'); });
+	SET_SHIFT(, KEY_BACKSLASH,  { SEND_CHR('\\'); }, { SEND_CHR('|'); });
+	SET_SHIFT(, KEY_COMMA,      { SEND_CHR(','); }, { SEND_CHR('<'); });
+	SET_SHIFT(, KEY_DOT,        { SEND_CHR('.'); }, { SEND_CHR('>'); });
+	SET_SHIFT(, KEY_SLASH,      { SEND_CHR('/'); }, { SEND_CHR('?'); });
+	SET_SHIFT(, KEY_GRAVE,      { SEND_CHR('`'); }, { SEND_CHR('~'); });
 
 	//not implemented
 
 	SETFUNC_(NORMAL, KEY_RESERVED) { printf("reserved"); };
-	SETFUNC_(NORMAL, KEY_ESC) { printf("Esc"); };
-	SETFUNC_(NORMAL, KEY_1) { printf("1"); };
-	SETFUNC_(NORMAL, KEY_2) { printf("2"); };
-	SETFUNC_(NORMAL, KEY_3) { printf("3"); };
-	SETFUNC_(NORMAL, KEY_4) { printf("4"); };
-	SETFUNC_(NORMAL, KEY_5) { printf("5"); };
-	SETFUNC_(NORMAL, KEY_6) { printf("6"); };
-	SETFUNC_(NORMAL, KEY_7) { printf("7"); };
-	SETFUNC_(NORMAL, KEY_8) { printf("8"); };
-	SETFUNC_(NORMAL, KEY_9) { printf("9"); };
-	SETFUNC_(NORMAL, KEY_0) { printf("0"); };
-	SETFUNC_(NORMAL, KEY_MINUS) { printf("minus"); };
-	SETFUNC_(NORMAL, KEY_EQUAL) { printf("equal"); };
-	SETFUNC_(NORMAL, KEY_BACKSPACE) { printf("backspace"); };
-	SETFUNC_(NORMAL, KEY_TAB) { printf("tab"); };
-	SETFUNC_(NORMAL, KEY_LEFTBRACE) { printf("["); };
-	SETFUNC_(NORMAL, KEY_RIGHTBRACE) { printf("]"); };
-	SETFUNC_(NORMAL, KEY_ENTER) { printf("enter"); };
+	SETFUNC_(NORMAL, KEY_BACKSPACE) { printf("<bs>"); };
+
+
 	SETFUNC_(NORMAL, KEY_LEFTCTRL) { printf("l-ctrl"); };
-	SETFUNC_(NORMAL, KEY_SEMICOLON) { printf(";"); };
-	SETFUNC_(NORMAL, KEY_APOSTROPHE) { printf("'"); };
-	SETFUNC_(NORMAL, KEY_GRAVE) { printf("~"); };
-	SETFUNC_(NORMAL, KEY_LEFTSHIFT) { printf("l-shift"); };
-	SETFUNC_(NORMAL, KEY_BACKSLASH) { printf("\\"); };
-	SETFUNC_(NORMAL, KEY_COMMA) { printf(","); };
-	SETFUNC_(NORMAL, KEY_DOT) { printf("."); };
-	SETFUNC_(NORMAL, KEY_SLASH) { printf("/"); };
-	SETFUNC_(NORMAL, KEY_RIGHTSHIFT) { printf("r-shift"); };
+
 	SETFUNC_(NORMAL, KEY_KPASTERISK) { printf("kp-asterix"); };
 	SETFUNC_(NORMAL, KEY_LEFTALT) { printf("l-alt"); };
-	SETFUNC_(NORMAL, KEY_SPACE) { printf("space"); };
 	SETFUNC_(NORMAL, KEY_F1) { printf("F1"); };
 	SETFUNC_(NORMAL, KEY_F2) { printf("F2"); };
 	SETFUNC_(NORMAL, KEY_F3) { printf("F3"); };
@@ -161,8 +200,7 @@ KeymapStack InputHandler::GenenerateKeymapStack() {
 
 	SETFUNC_(NORMAL, KEY_COMPOSE) { printf("compose"); };
 	
-	printf("end-\n");
-	return KeymapStack(keymaps);
+	return KeymapStack([this] { Stop(); },keymaps);
 
 }
 } // namespace Kmswm
