@@ -16,6 +16,7 @@ void Panic(int code, const char* format, ...) {
 	perror(nullptr);
 	exit(code);
 }
+
 suseconds_t GetDeltaMicroseconds(struct timeval t0, struct timeval t1) {
 	suseconds_t deltaUS = t1.tv_usec - t0.tv_usec;
 	time_t deltaS  = t1.tv_sec - t0.tv_sec;

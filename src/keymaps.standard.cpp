@@ -1,6 +1,7 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 
+#include "misc.h"
 #include "keymaps.h"
 
 #define SEND_CHR(_char) putchar(_char)
@@ -123,10 +124,12 @@ KeymapStack KeymapStack::Generate(class InputHandler *ih) {
 				ks->Pop();
 		});
 
-	SET_DOWN(, KEY_PAGEUP,   KM_ALT, { SEND_STR("<alt-pg-up>"); });
-	SET_DOWN(, KEY_PAGEDOWN, KM_ALT, { SEND_STR("<alt-pg-down>"); });
-
-
+	SET_DOWN(, KEY_PAGEUP,   KM_ALT, { Spawn("amixer", "sset", "Master", "5%+"); });
+	SET_DOWN(, KEY_PAGEDOWN, KM_ALT, { Spawn("amixer", "sset", "Master", "5%-"); });
+	SET_DOWN(, KEY_PAUSE,    KM_ALT, { Spawn("amixer", "sset", "Master", "toggle"); });
+	/*SET_DOWN(, KEY_PAUSE,    KM_ALT, { SpawnCallback(
+				[] (std::string s, int) { printf("'%s'", s.c_str()); }, "sh", "-c", "echo 'hello there'; sleep 1; echo 'done' "); });
+	*/
 	SET_NORMAL(, KEY_SPACE, { SEND_CHR(' '); });
 	SET_NORMAL(, KEY_ENTER, { SEND_CHR('\n'); });
 	SET_NORMAL(, KEY_TAB,   { SEND_CHR('\t'); });
