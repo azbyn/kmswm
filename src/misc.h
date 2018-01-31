@@ -13,5 +13,7 @@ inline std::string string_format(const std::string& format, Args ... args) {
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
-void panic(int code, const char* format, ...);
+void Panic(int code, const char* format, ...);
+
+suseconds_t GetDeltaMicroseconds(struct timeval a, struct timeval b);
 }//namespace Kmswm

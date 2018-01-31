@@ -12,29 +12,38 @@
 
 #include "input_handler.h"
 
-#define KEYMAP_SIZE  256
-#define KEY_VAL_UP   0
-#define KEY_VAL_DOWN 1
-#define KEY_VAL_HOLD 2
-
 namespace Kmswm {
-InputHandler::InputHandler(const char *devicePath, void (*onExit) (void)) :
-			keymapStack(GenenerateKeymapStack()) {
+InputHandler::InputHandler(const char *devicePath, void (*onExit)(void)) :
+			keymapStack(KeymapStack::Generate(this)) {
 	running = true;
 	this->onExit = onExit;
 	this->fd = open(devicePath, O_RDWR);
 	if (fd == -1) {
-		panic(1, "Can't open '%s'", devicePath);
+		Panic(1, "Can't open '%s'", devicePath);
 	}
 	char name[256];
 	printf("Press a key\n");
-	ioctl(fd, EVIOCGNAME(sizeof(name)), name);
+	if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
+		Panic(1, "EVIOCGNAME fail");
+	if (ioctl(fd, EVIOCGREP, initalRepeat))
+		Panic(1, "EVIOCGREP fail");
+
+	printf("initial repeat %d, %d\n", initalRepeat[0], initalRepeat[1]);
+
+	int rep[2] { KEY_HOLD_DELAY_MS, KEY_REPEAT_DELAY };
+	if (ioctl(fd, EVIOCSREP, rep))
+		Panic(1, "EVIOCSREP fail");
+
+	printf("new repeat %d, %d\n", rep[0], rep[1]);
+
+
 	printf("Reading from %s (%s)\n", devicePath, name);
-	
+
+	SetLed(LED_CAPSL, false);
+	SetLed(LED_NUML, false);
 	thread = std::thread(&InputHandler::Update, this);
 }
 InputHandler::~InputHandler() {
-	close(fd);
 	Stop();
 }
 void InputHandler::ThreadInit() {
@@ -45,43 +54,34 @@ void InputHandler::Write(uint16_t type, uint16_t code, int32_t value) {
 	struct input_event e = {{}, type, code, value };
 	write(fd, &e, sizeof(struct input_event));
 }
+void InputHandler::SetLed(uint16_t led, bool value) {
+	Write(EV_LED, led, value);
+}
 
 void InputHandler::Stop() {
+	if (!running) return;
 	running = false;
+	if (ioctl(fd, EVIOCSREP, initalRepeat))
+		Panic(1, "EVIOCSREP --fail");
+
 	this->onExit();
+	close(fd);
 }
 
 void InputHandler::Update() {
 	struct input_event e;
-	
+
 	const int size = sizeof(e);
 	while (running) {
 		if (read(fd, &e, size) != size)
-			Kmswm::panic(1, "read()");
-		//printf("t= %d v=%d c=%d\n", e.type, e.value, e.code);
+			Panic(1, "read()");
+		//printf("t=%d v=%d c=%d\n", e.type, e.value, e.code);
 		if (e.type != EV_KEY)
 			continue;
 		assert(e.code < KEYMAP_SIZE);
-
-		switch (e.value) {
-		case KEY_VAL_UP:
-			//printf("up c=%d:\n", e.code);
-			if (e.code == KEY_ESC) {
-				return;
-			}
-			keymapStack.ReleaseKey(e.code);
-			break;
-		case KEY_VAL_DOWN:
-			//printf("down c=%d:", e.code);
-			keymapStack.PressKey(e.code);
-			break;
-		case KEY_VAL_HOLD:
-			keymapStack.HoldKey(e.code);
-			break;
-		}
+		keymapStack.HandleKey(e.code, e.value);
 		fflush(stdout);
-
 	}
 }
 
-} // namespace Kmswm
+}// namespace Kmswm

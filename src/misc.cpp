@@ -1,19 +1,26 @@
-#include <memory>
-#include <iostream>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <sys/types.h>
+
+#include <iostream>
+#include <memory>
 
 #include "misc.h"
 
-
-
 namespace Kmswm {
-void panic(int code, const char* format, ...) {
+void Panic(int code, const char* format, ...) {
 	va_list args;
 	va_start(args, format);
 	vfprintf(stderr, format, args);
-	perror("");
+	fputs(": ", stderr);
+	perror(nullptr);
 	exit(code);
+}
+suseconds_t GetDeltaMicroseconds(struct timeval t0, struct timeval t1) {
+	suseconds_t deltaUS = t1.tv_usec - t0.tv_usec;
+	time_t deltaS  = t1.tv_sec - t0.tv_sec;
+	
+	return (deltaS * 1000000) + deltaUS;
 }
 }//namespace Kmswm
 /*
