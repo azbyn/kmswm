@@ -18,9 +18,9 @@ THIS_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CPPFLAGS := $(INC_FLAGS)
 CPPFLAGS += -Wall -Wextra -Wpedantic -g -std=c++17
-CPPFLAGS += -I/usr/include/libdrm
+CPPFLAGS += -I /usr/include/libdrm
 
-LDFLAGS := -pthread
+LDFLAGS := -pthread -ldrm
 
 $(TARGET): $(OBJS)
 	@$(COMPILER) $(OBJS) -o $@ $(LDFLAGS)

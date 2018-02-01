@@ -15,7 +15,7 @@
 #define KEY_VAL_DOWN 1
 #define KEY_VAL_HOLD 2
 
-namespace Kmswm {
+namespace kmswm {
 typedef size_t Key;
 typedef uint8_t Modifier;
 //using std::function gives significantly slower compile and run times
@@ -53,6 +53,26 @@ enum Keymaps : KeymapIndex {
 	MAX_KM,
 };
 class KeymapStack {
+	struct Node {
+		Node *prev;
+		Node *next;
+		bool used;
+		KeymapIndex value;
+
+		Node(Node *prev, Node *next, KeymapIndex value, bool used);
+	};
+	Node *rootNode;
+	Node *node;
+
+	// we use uint8_t because we could press multiple of the same
+	// modifier at once (ie. pressing both l-ctrl and r-ctrl)
+	std::array<uint8_t, MAX_MOD> modifiers;
+	std::map<Key, Modifier> modifierKeys;
+	class InputHandler *inputHandler;
+	const std::vector<Keymap> keymaps;
+	
+	void PressBase(Key key, int event);
+	void Logger();
 public:
 	KeymapStack(
 			class InputHandler *ih,
@@ -72,27 +92,8 @@ public:
 	bool GetModifier(Modifier mod) const;
 	KeymapIndex Top() const;
 
-	static KeymapStack Generate(class InputHandler *ih);
+	static KeymapStack generate(class InputHandler *ih);
 
-private:
-	struct Node {
-		Node *prev;
-		Node *next;
-		bool used;
-		KeymapIndex value;
 
-		Node(Node *prev, Node *next, KeymapIndex value, bool used);
-	};
-	Node *rootNode;
-	Node *node;
-	// we use uint8_t because we could press multiple of the same
-	// modifier at once (ie. pressing both l-ctrl and r-ctrl)
-	std::array<uint8_t, MAX_MOD> modifiers;
-	std::map<Key, Modifier> modifierKeys;
-	class InputHandler *inputHandler;
-	const std::vector<Keymap> keymaps;
-	
-	void PressBase(Key key, int event);
-	void Logger();
 };
 }//namespace Kmswm

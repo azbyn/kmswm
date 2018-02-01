@@ -1,7 +1,8 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 
-#include "misc.h"
+#include "spawn.h"
+
 #include "keymaps.h"
 
 #define SEND_CHR(_char) putchar(_char)
@@ -46,8 +47,8 @@
 	SET_FUNC(_ks, _key, KEY_VAL_DOWN, KM_SHIFT, _shift); \
 	SET_FUNC(_ks, _key, KEY_VAL_HOLD, KM_SHIFT, _shift);
 
-namespace Kmswm {
-void LogKey(KeymapIndex km) {
+namespace kmswm {
+void logKey(KeymapIndex km) {
 	if (km == KM_ANTICAPS) { printf("[ANTI] %x", km); return; }
 	if (km == KM_CAPS)     { printf("[CAPS] %x", km); return; }
 	printf("[%c%c%c%c] %x",
@@ -63,13 +64,13 @@ void KeymapStack::Logger() {
 	printf("\033[0;0H");
 	
 	printf("<%c%c%c%c>\n",
-			GetModifier(MOD_SHIFT)?'S':' ',
-			GetModifier(MOD_CTRL )?'C':' ',
-			GetModifier(MOD_ALT  )?'A':' ',
-			GetModifier(MOD_SUPER)?'H':' ');
+			getModifier(MOD_SHIFT)?'S':' ',
+			getModifier(MOD_CTRL )?'C':' ',
+			getModifier(MOD_ALT  )?'A':' ',
+			getModifier(MOD_SUPER)?'H':' ');
 
 	for (int i = 0; i < KEYMAP_STACK_SIZE; ++i) {
-		LogKey(rootNode[i].value);
+		logKey(rootNode[i].value);
 		printf("%s\n", rootNode+i == node?"<-":"  ");
 	}
 	printf("S %d\n", modifiers[MOD_SHIFT]);
@@ -78,7 +79,7 @@ void KeymapStack::Logger() {
 	printf("H %d\n", modifiers[MOD_SUPER]);
 #endif
 }
-KeymapStack KeymapStack::Generate(class InputHandler *ih) {
+KeymapStack KeymapStack::generate(class InputHandler *ih) {
 	std::vector<Keymap> keymaps(MAX_KM);
 	std::vector<KeymapIndex> initialKeymaps = {/*NUMLOCK*/};
 	std::array<std::vector<Key>, MAX_MOD> modifierKeys = {};
@@ -124,9 +125,9 @@ KeymapStack KeymapStack::Generate(class InputHandler *ih) {
 				ks->Pop();
 		});
 
-	SET_DOWN(, KEY_PAGEUP,   KM_ALT, { Spawn("amixer", "sset", "Master", "5%+"); });
-	SET_DOWN(, KEY_PAGEDOWN, KM_ALT, { Spawn("amixer", "sset", "Master", "5%-"); });
-	SET_DOWN(, KEY_PAUSE,    KM_ALT, { Spawn("amixer", "sset", "Master", "toggle"); });
+	SET_DOWN(, KEY_PAGEUP,   KM_ALT, { spawn("amixer", "sset", "Master", "5%+"); });
+	SET_DOWN(, KEY_PAGEDOWN, KM_ALT, { spawn("amixer", "sset", "Master", "5%-"); });
+	SET_DOWN(, KEY_PAUSE,    KM_ALT, { spawn("amixer", "sset", "Master", "toggle"); });
 	/*SET_DOWN(, KEY_PAUSE,    KM_ALT, { SpawnCallback(
 				[] (std::string s, int) { printf("'%s'", s.c_str()); }, "sh", "-c", "echo 'hello there'; sleep 1; echo 'done' "); });
 	*/

@@ -10,26 +10,23 @@
 #include "input_handler.h"
 #include "misc.h"
 
-const char *DEVICE = "/dev/input/event1";
+using namespace kmswm;
 
-using namespace std;
-using namespace Kmswm;
-
-struct termios old_termios;
-
+struct termios oldTermios;
 GraphicsHandler *graphics;
 InputHandler *input;
 
-void restore_state() {
-	if (input) input->Stop();
+void restoreState() {
+	if (input)
+		input->Stop();
 	
-	tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldTermios);
 	delete graphics;
 	delete input;
 	printf("<on_exit>");
 }
 bool handled = false;
-void handle_exception() {
+void handleException() {
 	if (handled) return;
 	try {
 		throw;
@@ -37,34 +34,37 @@ void handle_exception() {
 	catch (std::exception& e) {
 		handled = true;
 		fprintf(stderr, "\nerror:\n\t%s\n", e.what());
-		restore_state();
+		restoreState();
 		exit(-1);
 	}
 }
 
 int main(int argc, char *argv[]) {
-	tcgetattr(STDIN_FILENO, &old_termios);
-	struct termios newt = old_termios;
-	atexit(restore_state);
-	std::set_terminate(handle_exception);
-	
-	newt.c_iflag &= ~(IXON);
-	newt.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	tcgetattr(STDIN_FILENO, &oldTermios);
+	struct termios newTermios = oldTermios;
+	atexit(restoreState);
+	std::set_terminate(handleException);
 
-	const char *device = DEVICE;
+	newTermios.c_iflag &= ~(IXON);
+	newTermios.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newTermios);
+
+	const char *inputDev = "/dev/input/event1";
+	const char *graphicsDev = "/dev/dri/card0";
 	if (argc > 1)
-		device = argv[1];
-	//graphics = new GraphicsHandler();
-	input = new InputHandler(device, [] {
-	//		graphics->Stop();
+		inputDev = argv[1];
+	if (argc > 2)
+		graphicsDev = argv[2];
+
+	graphics = new GraphicsHandler(graphicsDev);
+	input = new InputHandler(inputDev, [] {
+			graphics->Stop();
 		});
 
 	input->ThreadInit();
-	//graphics->ThreadInit();
+	graphics->ThreadInit();
 		
 	getchar(); //if we don't do this all input will be sent to shell
 	return 0;
 }
-
 

@@ -8,34 +8,30 @@
 #include <stdexcept>
 #include <thread>
 
-#include "misc.h"
-
 #include "input_handler.h"
 
-namespace Kmswm {
+namespace kmswm {
 InputHandler::InputHandler(const char *devicePath, void (*onExit)(void)) :
-			keymapStack(KeymapStack::Generate(this)) {
+			keymapStack(KeymapStack::generate(this)), onExit(onExit) {
 	running = true;
-	this->onExit = onExit;
-	this->fd = open(devicePath, O_RDWR);
+	fd = open(devicePath, O_RDWR);
 	if (fd == -1) {
-		Panic(1, "Can't open '%s'", devicePath);
+		panic("Can't open '%s'", devicePath);
 	}
 	char name[256];
 	printf("Press a key\n");
 	if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0)
-		Panic(1, "EVIOCGNAME fail");
+		panic("EVIOCGNAME fail");
 	if (ioctl(fd, EVIOCGREP, initalRepeat))
-		Panic(1, "EVIOCGREP fail");
+		panic("EVIOCGREP fail");
 
-	printf("initial repeat %d, %d\n", initalRepeat[0], initalRepeat[1]);
+	//printf("initial repeat %d, %d\n", initalRepeat[0], initalRepeat[1]);
 
 	int rep[2] { KEY_HOLD_DELAY_MS, KEY_REPEAT_DELAY };
 	if (ioctl(fd, EVIOCSREP, rep))
-		Panic(1, "EVIOCSREP fail");
+		panic("EVIOCSREP fail");
 
-	printf("new repeat %d, %d\n", rep[0], rep[1]);
-
+	//printf("new repeat %d, %d\n", rep[0], rep[1]);
 
 	printf("Reading from %s (%s)\n", devicePath, name);
 
@@ -59,10 +55,11 @@ void InputHandler::SetLed(uint16_t led, bool value) {
 }
 
 void InputHandler::Stop() {
-	if (!running) return;
+	if (!running)
+		return;
 	running = false;
 	if (ioctl(fd, EVIOCSREP, initalRepeat))
-		Panic(1, "EVIOCSREP --fail");
+		panic("EVIOCSREP fail");
 
 	this->onExit();
 	close(fd);
@@ -74,7 +71,7 @@ void InputHandler::Update() {
 	const int size = sizeof(e);
 	while (running) {
 		if (read(fd, &e, size) != size)
-			Panic(1, "read()");
+			panic("read()");
 		//printf("t=%d v=%d c=%d\n", e.type, e.value, e.code);
 		if (e.type != EV_KEY)
 			continue;

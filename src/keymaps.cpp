@@ -8,7 +8,7 @@
 
 #include "keymaps.h"
 
-namespace Kmswm {
+namespace kmswm {
 
 KeymapStack::Node::Node(Node *prev, Node *next, KeymapIndex value, bool used) :
 			prev(prev), next(next), used(used), value(value) {}
@@ -27,22 +27,23 @@ KeymapStack::KeymapStack(
 					KEYMAP_STACK_SIZE - 1));
 	}
 	// we use malloc instead of new because we don't use destructors and default constructors
-	Node *nodes = (Node *) malloc(sizeof(Node) * KEYMAP_STACK_SIZE);
-	nodes[0] = Node(nullptr, nodes + 1, 0, true);
+	Node *nodes =  (Node *) malloc(sizeof(Node) * KEYMAP_STACK_SIZE);
+
+	nodes[0] = Node(nullptr, &nodes[1], 0, true);
 	for (size_t i = 1; i < KEYMAP_STACK_SIZE - 1; ++i) {
 		auto hasVal = i <= initialKeymaps.size();
-		auto val = hasVal ? initialKeymaps[i - 1 ] : 0;
+		auto val = hasVal ? initialKeymaps[i - 1] : 0;
 		nodes[i] = Node(
-				nodes + i - 1,
-				nodes + i + 1,
+				&nodes[i - 1],
+				&nodes[i + 1],
 				val,
 				hasVal);
 	}
 	nodes[KEYMAP_STACK_SIZE-1] = Node(
-			nodes + KEYMAP_STACK_SIZE - 2,
+			&nodes[KEYMAP_STACK_SIZE - 2],
 			nullptr, 0, false);
-	node = nodes;
-	rootNode = nodes;
+	
+	rootNode = node = &nodes[0];
 
 	for (auto mod = 0; mod < MAX_MOD; ++mod) {
 		for (Key key : _modifierKeys[mod]) {

@@ -6,11 +6,22 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <thread>
-#include <functional>
+
+#define CONCATENATE_IMPL(s1, s2) s1##s2
+#define CONCATENATE(s1, s2) CONCATENATE_IMPL(s1, s2)
+
+#ifdef __COUNTER__
+#define ANONYMUS_VARIABLE(str) \
+	CONCATENATE(str, __COUNTER__)
+#else
+#define ANONYMUS_VARIABLE(str) \
+	CONCATENATE(str, __LINE__)
+#endif
 
 
-namespace Kmswm {
+namespace kmswm {
+typedef int FD;
+
 template<typename ... Args>
 inline std::string string_format(const std::string& format, Args ... args) {
 	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
@@ -19,62 +30,15 @@ inline std::string string_format(const std::string& format, Args ... args) {
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 
-void Panic(int code, const char* format, ...);
+//print error msg
+void verror(int code, const char* format, va_list args);
+void error(int code, const char* format, ...);
+void error(const char* format, ...);
 
-template<typename ... Args>
-void Spawn(const char* file, Args ... args) {
-	pid_t pid = fork();
-	if (pid < 0) {
-		Panic(2, "fork failed");
-	}
-	else if (pid == 0) {
-		execlp(file, file, args ..., (char*)NULL);
-		Panic(-1, "exec failed");
-	}
-}
-inline void _SpawnThread(pid_t pid, int fd, std::function<void(std::string, int)> callback) {
-	int status;
-	FILE *fp = fdopen(fd, "r");
-	
-	waitpid(pid, &status, 0);
+//print error msg then exit with code
+void panic(int code, const char* format, ...);
+void panic(const char* format, ...);
 
-	const size_t len = 1024;
-	char buf[len];
-	std::string result;
-	while (fgets(buf, len, fp)) {
-		result += buf;
-	}
-	callback(result, status);
-	fclose(fp);
+suseconds_t getDeltaMicroseconds(struct timeval a, struct timeval b);
 
-}
-template<typename ... Args>
-void SpawnCallback(std::function<void(std::string, int)> callback, const char* file, Args ... args) {
-	int fd[2];
-	int read_fd, write_fd;
-	if (pipe(fd) < 0) {
-		Panic(4, "pipe error");
-	}
-	read_fd = fd[0];
-	write_fd = fd[1];
-
-	pid_t pid = fork();
-	if (pid < 0) {
-		Panic(2, "fork failed");
-	}
-	else if (pid == 0) {
-		close(read_fd);
-		dup2(write_fd, 1);
-		close(write_fd);
-		execlp(file, file, args ..., (char*)NULL);
-		Panic(-1, "exec failed");
-	}
-	else {
-		close(write_fd);
-		std::thread t(&_SpawnThread, pid, read_fd, callback);
-		t.detach();
-	}
-}
-
-suseconds_t GetDeltaMicroseconds(struct timeval a, struct timeval b);
-}//namespace Kmswm
+}//namespace kmswm
