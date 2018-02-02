@@ -32,9 +32,7 @@ private:
 	std::thread thread;
 	FD Open(const char *node);
 	void Prepare(FD fd);
-	
-//static int modeset_setup_dev(int fd, drmModeRes *res, drmModeConnector *conn,
-//			     struct modeset_dev *dev)
+	int SetupDev(FD fd, drmModeRes *res, drmModeConnector *conn);
 
 	void Update();
 

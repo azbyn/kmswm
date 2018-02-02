@@ -1,0 +1,12 @@
+#!/usr/bin/sh
+astyle \
+	--style=google \
+	--indent=tab=4 \
+	--attach-namespaces \
+	--attach-classes \
+	--attach-inlines \
+	--attach-extern-c \
+	--attach-closing-while \
+	--align-reference=type \
+	--break-closing-braces \
+	$1
