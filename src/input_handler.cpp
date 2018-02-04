@@ -12,9 +12,10 @@
 
 namespace kmswm {
 InputHandler::InputHandler(const char *devicePath, void (*onExit)(void)) :
-		keymapStack(KeymapStack::generate(this)),
-		onExit(onExit),
-		running(false) {
+	keymapStack(KeymapStack::generate(this)),
+	onExit(onExit),
+	running(false) {
+
 	fd = open(devicePath, O_RDWR);
 	if (fd == -1) {
 		panic("Can't open '%s'", devicePath);

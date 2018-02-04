@@ -16,7 +16,7 @@ private:
 	int _errno;
 	std::string msg;
 public:
-	Error() {} //only used for class Result
+	Error() = default; //only used for class Result
 	Error(int _errno, const char *msg) : _errno(_errno), msg(msg) {}
 	Error(const char *msg) : Error(errno, msg) {}
 

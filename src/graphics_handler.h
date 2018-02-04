@@ -1,6 +1,15 @@
 #pragma once
 #include <xf86drm.h>
 #include <xf86drmMode.h>
+/*
+#include <gbm.h>
+
+#define GL_GLEXT_PROTOTYPES 1
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+*/
 
 #include <thread>
 #include <atomic>
@@ -9,6 +18,7 @@
 #include "expected.h"
 #include "result.h"
 #include "misc.h"
+#include "color.h"
 
 namespace kmswm {
 class ModesetDev {
@@ -19,7 +29,7 @@ public:
 	uint32_t stride;
 	uint32_t size;
 	uint32_t handle;
-	uint8_t *map;
+	Color *map;
 
 	drmModeModeInfo mode;
 	uint32_t fb;

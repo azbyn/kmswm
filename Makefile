@@ -20,7 +20,7 @@ CPPFLAGS := $(INC_FLAGS)
 CPPFLAGS += -Wall -Wextra -Wpedantic -g -std=c++17
 CPPFLAGS += -I /usr/include/libdrm
 
-LDFLAGS := -pthread -ldrm
+LDFLAGS := -pthread -ldrm -lgbm -lEGL -lGLESv2
 
 $(TARGET): $(OBJS)
 	@$(COMPILER) $(OBJS) -o $@ $(LDFLAGS)

@@ -172,8 +172,8 @@ Result ModesetDev::CreateFb(FD fd) {
 	}
 
 	/* perform actual memory mapping */
-	this->map = (uint8_t*) mmap(0, this->size, PROT_READ | PROT_WRITE, MAP_SHARED,
-	                            fd, mreq.offset);
+	this->map = (Color *)mmap(0, this->size, PROT_READ | PROT_WRITE, MAP_SHARED,
+	                          fd, mreq.offset);
 	if (this->map == MAP_FAILED) {
 		ret = Error("cannot mmap dumb buffer");
 		goto err_fb;
@@ -191,7 +191,6 @@ err_destroy:
 	dreq.handle = this->handle;
 	drmIoctl(fd, DRM_IOCTL_MODE_DESTROY_DUMB, &dreq);
 	return ret;
-
 }
 
 GraphicsHandler::GraphicsHandler(const GraphicsHandler& rhs) :
@@ -228,8 +227,25 @@ static uint8_t next_color(bool *up, uint8_t cur, unsigned int mod) {
 
 	return next;
 }
+uint8_t smiley_face[8][8] = {
+	{0,0,1,1,1,1,0,0},
+	{0,1,0,0,0,0,1,0},
+	{1,0,1,0,0,1,0,1},
+	{1,0,0,0,0,0,0,1},
+	{1,0,1,0,0,1,0,1},
+	{1,0,0,1,1,0,0,1},
+	{0,1,0,0,0,0,1,0},
+	{0,0,1,1,1,1,0,0},
+};
+Color smileyFacePixels[8][8] = {};
 
 void GraphicsHandler::Update() {
+	for (int i = 0; i < 8; ++i) {
+		for (int j = 0; j < 8; ++j) {
+			smileyFacePixels[i][j] = smiley_face[i][j] ? Colors::yellow : Colors::black;
+		}
+	}
+
 	uint8_t r, g, b;
 	bool r_up, g_up, b_up;
 
@@ -238,16 +254,20 @@ void GraphicsHandler::Update() {
 	g = rand() % 0xff;
 	b = rand() % 0xff;
 	r_up = g_up = b_up = true;
+	printf("ms stride = %u %u\n", modesets[0].stride / 4, modesets[0].width);
 
-	while (running) {//for (int i = 0; i < 20; ++i) {
+	while (running) { //for (int i = 0; i < 20; ++i) {
 		r = next_color(&r_up, r, 20);//4);
 		g = next_color(&g_up, g, 10);//2);
 		b = next_color(&b_up, b, 5);///1);
 		for (auto& iter : modesets) {
 			for (uint32_t j = 0; j < iter.height; ++j) {
 				for (uint32_t k = 0; k < iter.width; ++k) {
-					uint32_t off = iter.stride * j + k * 4;
-					*(uint32_t*)&iter.map[off] = (r << 16) | (g << 8) | b;
+					uint32_t off = (iter.stride / 4) * j + k;
+					if (j < 64 && k < 64)
+						*(Color *)&iter.map[off] = smileyFacePixels[j%8][k%8];
+					else
+						iter.map[off] = (r << 16) | (g << 8) | b;
 				}
 			}
 		}
