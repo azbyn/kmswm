@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 astyle \
-	--style=google \
+	--style=attach \
 	--indent=tab=4 \
 	--attach-namespaces \
 	--attach-classes \
@@ -9,4 +9,4 @@ astyle \
 	--attach-closing-while \
 	--align-reference=type \
 	--break-closing-braces \
-	$1
+	$@

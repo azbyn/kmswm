@@ -19,11 +19,13 @@ InputHandler *input;
 void restoreState() {
 	if (input)
 		input->Stop();
-	
+
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldTermios);
-	delete graphics;
+	//delete graphics;
 	delete input;
-	printf("<on_exit>");
+	printf("<on_exit>\n");
+
+	getchar(); //if we don't do this all input will be sent to shell
 }
 bool handled = false;
 void handleException() {
@@ -55,16 +57,18 @@ int main(int argc, char *argv[]) {
 		inputDev = argv[1];
 	if (argc > 2)
 		graphicsDev = argv[2];
-
-	graphics = new GraphicsHandler(graphicsDev);
+	auto g = GraphicsHandler::create(graphicsDev).Get();
+	graphics = &g;
 	input = new InputHandler(inputDev, [] {
-			graphics->Stop();
-		});
+		graphics->Stop();
+	});
 
 	input->ThreadInit();
 	graphics->ThreadInit();
-		
-	getchar(); //if we don't do this all input will be sent to shell
+
+	input->ThreadJoin();
+	graphics->ThreadJoin();
+
 	return 0;
 }
 

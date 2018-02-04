@@ -12,8 +12,9 @@
 
 namespace kmswm {
 InputHandler::InputHandler(const char *devicePath, void (*onExit)(void)) :
-			keymapStack(KeymapStack::generate(this)), onExit(onExit) {
-	running = true;
+		keymapStack(KeymapStack::generate(this)),
+		onExit(onExit),
+		running(false) {
 	fd = open(devicePath, O_RDWR);
 	if (fd == -1) {
 		panic("Can't open '%s'", devicePath);
@@ -37,12 +38,27 @@ InputHandler::InputHandler(const char *devicePath, void (*onExit)(void)) :
 
 	SetLed(LED_CAPSL, false);
 	SetLed(LED_NUML, false);
-	thread = std::thread(&InputHandler::Update, this);
 }
+InputHandler::InputHandler(const InputHandler& rhs) :
+	keymapStack(rhs.keymapStack),
+	fd(rhs.fd),
+	onExit(rhs.onExit),
+	running(false) {}
+InputHandler::InputHandler(InputHandler&& rhs) :
+	keymapStack(std::move(rhs.keymapStack)),
+	fd(rhs.fd),
+	onExit(rhs.onExit),
+	running(false) {}
+
+
 InputHandler::~InputHandler() {
 	Stop();
 }
 void InputHandler::ThreadInit() {
+	running = true;
+	thread = std::thread(&InputHandler::Update, this);
+}
+void InputHandler::ThreadJoin() {
 	thread.join();
 }
 

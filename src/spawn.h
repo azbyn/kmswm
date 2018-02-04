@@ -55,13 +55,15 @@ void spawnCallback(std::function<void(std::string, int)> callback, const char* f
 	pid_t pid = fork();
 	if (pid < 0) {
 		panic("fork failed");
-	} else if (pid == 0) {
+	}
+	else if (pid == 0) {
 		close(read_fd);
 		dup2(write_fd, 1);
 		close(write_fd);
 		execlp(file, file, args ..., (char*)NULL);
 		panic("exec failed");
-	} else {
+	}
+	else {
 		close(write_fd);
 		std::thread t(&_spawnThread, pid, read_fd, callback);
 		t.detach();

@@ -49,25 +49,31 @@
 
 namespace kmswm {
 void logKey(KeymapIndex km) {
-	if (km == KM_ANTICAPS) { printf("[ANTI] %x", km); return; }
-	if (km == KM_CAPS)     { printf("[CAPS] %x", km); return; }
+	if (km == KM_ANTICAPS) {
+		printf("[ANTI] %x", km);
+		return;
+	}
+	if (km == KM_CAPS)     {
+		printf("[CAPS] %x", km);
+		return;
+	}
 	printf("[%c%c%c%c] %x",
-			km & KM_SHIFT?'S':' ',
-			km & KM_CTRL ?'C':' ',
-			km & KM_ALT  ?'A':' ',
-			km & KM_SUPER?'H':' ',
-			km
-		);
+	       km & KM_SHIFT?'S':' ',
+	       km & KM_CTRL ?'C':' ',
+	       km & KM_ALT  ?'A':' ',
+	       km & KM_SUPER?'H':' ',
+	       km
+	      );
 }
 void KeymapStack::Logger() {
 #if 0
 	printf("\033[0;0H");
-	
+
 	printf("<%c%c%c%c>\n",
-			getModifier(MOD_SHIFT)?'S':' ',
-			getModifier(MOD_CTRL )?'C':' ',
-			getModifier(MOD_ALT  )?'A':' ',
-			getModifier(MOD_SUPER)?'H':' ');
+	       getModifier(MOD_SHIFT)?'S':' ',
+	       getModifier(MOD_CTRL )?'C':' ',
+	       getModifier(MOD_ALT  )?'A':' ',
+	       getModifier(MOD_SUPER)?'H':' ');
 
 	for (int i = 0; i < KEYMAP_STACK_SIZE; ++i) {
 		logKey(rootNode[i].value);
@@ -95,35 +101,35 @@ KeymapStack KeymapStack::generate(class InputHandler *ih) {
 
 	//Caps
 	SET_FUNC(ks, KEY_CAPSLOCK, KEY_VAL_DOWN, KM_NORMAL, {
-			ks->SetLed(LED_CAPSL, true);
-			ks->Push(KM_CAPS);
-			//we do this twice to override the leds being set by the console
-			ks->SetLed(LED_CAPSL, true);
-		});
+		ks->SetLed(LED_CAPSL, true);
+		ks->Push(KM_CAPS);
+		//we do this twice to override the leds being set by the console
+		ks->SetLed(LED_CAPSL, true);
+	});
 	SET_FUNC(ks, KEY_CAPSLOCK, KEY_VAL_DOWN, KM_CAPS, {
-			ks->SetLed(LED_CAPSL, false);
-			ks->Pop(KM_CAPS);
-			ks->SetLed(LED_CAPSL, false);
-		});
+		ks->SetLed(LED_CAPSL, false);
+		ks->Pop(KM_CAPS);
+		ks->SetLed(LED_CAPSL, false);
+	});
 
 	//Shift
 	SET_FUNC_N(ks, modifierKeys[MOD_SHIFT], KEY_VAL_DOWN, KM_NORMAL, {
-			printf("<shift>"); ks->Push(KM_CAPS); ks->Push(KM_SHIFT);
-		});
+		printf("<shift>"); ks->Push(KM_CAPS); ks->Push(KM_SHIFT);
+	});
 	// if we press multiple shift keys
 	SET_FUNC_N(ks, modifierKeys[MOD_SHIFT], KEY_VAL_DOWN, KM_SHIFT, {
-			ks->Push(KM_SHIFT);
-		});
-	
+		ks->Push(KM_SHIFT);
+	});
+
 	SET_FUNC_N(ks, modifierKeys[MOD_SHIFT], KEY_VAL_DOWN, KM_CAPS, {
-			printf("<c-shift>"); ks->Push(KM_ANTICAPS); ks->Push(KM_SHIFT);
-		});
+		printf("<c-shift>"); ks->Push(KM_ANTICAPS); ks->Push(KM_SHIFT);
+	});
 	SET_FUNC_N(ks, modifierKeys[MOD_SHIFT], KEY_VAL_UP, KM_SHIFT, {
-			ks->Pop(KM_SHIFT);
-			auto top = ks->Top();
-			if (top == KM_CAPS || top == KM_ANTICAPS)
-				ks->Pop();
-		});
+		ks->Pop(KM_SHIFT);
+		auto top = ks->Top();
+		if (top == KM_CAPS || top == KM_ANTICAPS)
+			ks->Pop();
+	});
 
 	SET_DOWN(, KEY_PAGEUP,   KM_ALT, { spawn("amixer", "sset", "Master", "5%+"); });
 	SET_DOWN(, KEY_PAGEDOWN, KM_ALT, { spawn("amixer", "sset", "Master", "5%-"); });
@@ -210,7 +216,7 @@ KeymapStack KeymapStack::generate(class InputHandler *ih) {
 	/*
 	SET_NORMAL(, KEY_RESERVED,  { SEND_STR("<reserved>"); });
 	SET_NORMAL(, KEY_BACKSPACE, { SEND_STR("<bs>"); });
-	
+
 	SETFUNC_(NORMAL, KEY_LEFTMETA) { printf("<l-meta>"); };
 	SETFUNC_(NORMAL, KEY_RIGHTMETA) { printf("<r-meta>"); };
 

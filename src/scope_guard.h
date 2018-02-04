@@ -23,7 +23,7 @@ public:
 	ScopeGuard(const ScopeGuard&) = delete;
 	ScopeGuard& operator=(const ScopeGuard&) = delete;
 	ScopeGuard(ScopeGuard&& rhs) :
-			f(std::move(rhs.f)), active(rhs.active) {
+		f(std::move(rhs.f)), active(rhs.active) {
 		rhs.Dismiss();
 	}
 };
@@ -33,11 +33,11 @@ ScopeGuard<Fun> scopeGuard(Fun f) {
 }
 
 namespace detail {
-	enum class ScopeGuardOnExit {};
-	template<typename Fun>
-	ScopeGuard<Fun> operator+(ScopeGuardOnExit, Fun&& f) {
-		return ScopeGuard<Fun>(std::forward<Fun>(f));
-	}
+enum class ScopeGuardOnExit {};
+template<typename Fun>
+ScopeGuard<Fun> operator+(ScopeGuardOnExit, Fun&& f) {
+	return ScopeGuard<Fun>(std::forward<Fun>(f));
+}
 }//namespace detail
 
 #define SCOPE_EXIT(_body) \

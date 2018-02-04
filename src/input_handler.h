@@ -23,14 +23,17 @@ private:
 	KeymapStack keymapStack;
 	FD fd;
 	int initalRepeat[2];
-	std::atomic<bool> running;
 	void (*onExit)(void);
+	std::atomic<bool> running;
 	std::thread thread;
 	void Update();
 public:
 	InputHandler(const char *devicePath, void (*onExit)(void));
+	InputHandler(const InputHandler& rhs);
+	InputHandler(InputHandler&& rhs);
 	~InputHandler();
 	void ThreadInit();
+	void ThreadJoin();
 	void Stop();
 	void Write(uint16_t type, uint16_t code, int32_t value);
 	void SetLed(uint16_t led, bool value);

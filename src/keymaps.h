@@ -16,6 +16,14 @@
 #define KEY_VAL_HOLD 2
 
 namespace kmswm {
+/*
+using Key = size_t;
+using Modifier = uint8_t;
+using KeyAction = void (*)(class KeymapStack*);
+using KeyData = std::array<KeyAction, 3>;
+using KeymapIndex = int;
+*/
+
 typedef size_t Key;
 typedef uint8_t Modifier;
 //using std::function gives significantly slower compile and run times
@@ -39,8 +47,8 @@ enum Modifiers : Modifier {
 enum Keymaps : KeymapIndex {
 	KM_NORMAL = 0,
 	KM_SHIFT  = 1 << MOD_SHIFT,
-	KM_CTRL   = 1 << MOD_CTRL ,
-	KM_ALT    = 1 << MOD_ALT  ,
+	KM_CTRL   = 1 << MOD_CTRL,
+	KM_ALT    = 1 << MOD_ALT,
 	KM_SUPER  = 1 << MOD_SUPER,
 
 	//keys that toggle state when pressed
@@ -49,10 +57,11 @@ enum Keymaps : KeymapIndex {
 
 	//COMPOSE,
 	//NUMLOCK
-	
+
 	MAX_KM,
 };
 class KeymapStack {
+private:
 	struct Node {
 		Node *prev;
 		Node *next;
@@ -70,15 +79,15 @@ class KeymapStack {
 	std::map<Key, Modifier> modifierKeys;
 	class InputHandler *inputHandler;
 	const std::vector<Keymap> keymaps;
-	
+
 	void PressBase(Key key, int event);
 	void Logger();
 public:
 	KeymapStack(
-			class InputHandler *ih,
-			std::vector<Keymap> keymaps,
-			std::vector<KeymapIndex> initialKeymaps,
-			std::array<std::vector<Key>, MAX_MOD> modifierKeys);
+	    class InputHandler *ih,
+	    std::vector<Keymap> keymaps,
+	    std::vector<KeymapIndex> initialKeymaps,
+	    std::array<std::vector<Key>, MAX_MOD> modifierKeys);
 
 	~KeymapStack();
 	void Exit();
@@ -93,7 +102,5 @@ public:
 	KeymapIndex Top() const;
 
 	static KeymapStack generate(class InputHandler *ih);
-
-
 };
 }//namespace Kmswm

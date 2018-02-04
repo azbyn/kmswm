@@ -3,6 +3,8 @@
 #include <exception>
 #include <stdexcept>
 
+#include "error.h"
+
 namespace kmswm {
 
 template<class T>
@@ -10,63 +12,53 @@ class Expected {
 private:
 	union {
 		T value;
-		std::exception_ptr error;
+		Error error;
 	};
 	bool hasValue;
-	Expected() {}
+	//Expected() : Expected(false, Error()) {}
 public:
 	Expected(const T& rhs) :
-			value(rhs), hasValue(true) {}
+		value(rhs), hasValue(true) {}
+
 	Expected(T&& rhs) :
-			value(std::move(rhs)), hasValue(true) {}
+		value(std::move(rhs)), hasValue(true) {}
+
 	Expected(const Expected& rhs) : hasValue(rhs.hasValue) {
 		if (hasValue) new(&value) T(rhs.value);
-		else new(&error) std::exception_ptr(rhs.error);
+		else new(&error) Error(rhs.error);
 	}
 	Expected(Expected&& rhs) : hasValue(rhs.hasValue) {
 		if (hasValue) new(&value) T(std::move(rhs.value));
-		else new(&error) std::exception_ptr(std::move(rhs.error));
+		else new(&error) Error(std::move(rhs.error));
 	}
-	
-	template<class E>
-	Expected(const E& exception) {
-		if (typeid(exception) != typeid(E)) {
-			throw std::invalid_argument("slicing detected");
-		}
 
-	static_assert(std::is_base_of<std::exception, T>::value,
-			"E must be a exception");
-		new(this) Expected(std::make_exception_ptr(exception));
-	}
-	Expected(std::exception_ptr p) :
-			hasValue(false) {
-		new(&error) std::exception_ptr(std::move(p));
-	}
+	Expected(const Error& error) :
+		error(error), hasValue(false) {}
 
 	bool Valid() const {
 		return hasValue;
 	}
+	bool HasError() const {
+		return !hasValue;
+	}
 	T& Get() {
-		if (!hasValue) std::rethrow_exception(error);
+		if (!hasValue) error.Throw();
 		return value;
 	}
 	const T& Get() const {
-		if (!hasValue) std::rethrow_exception(error);
+		if (!hasValue) error.Throw();
 		return value;
 	}
-
-	template<class E>
-	bool HasException() const {
-		try {
-			if (!hasValue) std::rethrow_exception(error);
-		}
-		catch (const E&) {
-			return true;
-		}
-		catch (...) {
-		}
-		return false;
+	Error& GetError() {
+		if(hasValue) throw std::runtime_error("No error found");
+		return error;
 	}
+
+	const Error& GetError() const {
+		if(hasValue) throw std::runtime_error("No error found");
+		return error;
+	}
+	~Expected() {}
 
 	void swap(Expected& rhs) {
 		if (hasValue) {
@@ -77,7 +69,7 @@ public:
 			else {
 				auto t = std::move(rhs.error);
 				new(&rhs.value) T(std::move(value));
-				new(&error) std::exception_ptr(t);
+				new(&error) Error(t);
 				std::swap(hasValue, rhs.hasValue);
 			}
 		}
@@ -89,18 +81,6 @@ public:
 				error.swap(rhs.error);
 				std::swap(hasValue, rhs.hasValue);
 			}
-		}
-	}
-	static Expected<T> fromException() {
-		return Expected(std::current_exception());
-	}
-	template<class F>
-	static Expected fromCode(F fun) {
-		try {
-			return Expected(fun());
-		}
-		catch (...) {
-			return fromException();
 		}
 	}
 };

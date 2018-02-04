@@ -11,20 +11,20 @@
 namespace kmswm {
 
 KeymapStack::Node::Node(Node *prev, Node *next, KeymapIndex value, bool used) :
-			prev(prev), next(next), used(used), value(value) {}
+	prev(prev), next(next), used(used), value(value) {}
 
 KeymapStack::KeymapStack(
-		InputHandler *inputHandler,
-		std::vector<Keymap> keymaps,
-		std::vector<KeymapIndex> initialKeymaps,
-		std::array<std::vector<Key>, MAX_MOD> _modifierKeys) :
-			inputHandler(inputHandler), keymaps(keymaps) {
+    InputHandler *inputHandler,
+    std::vector<Keymap> keymaps,
+    std::vector<KeymapIndex> initialKeymaps,
+    std::array<std::vector<Key>, MAX_MOD> _modifierKeys) :
+	inputHandler(inputHandler), keymaps(keymaps) {
 	static_assert(KEYMAP_STACK_SIZE >= 2);// KEYMAP_STACK_SIZE must be greater than 2
 	if (initialKeymaps.size() >= KEYMAP_STACK_SIZE - 1) {
 		throw new std::runtime_error(
-				string_format("initialKeymaps too big (%d >= %d)",
-					initialKeymaps.size(),
-					KEYMAP_STACK_SIZE - 1));
+		    string_format("initialKeymaps too big (%d >= %d)",
+		                  initialKeymaps.size(),
+		                  KEYMAP_STACK_SIZE - 1));
 	}
 	// we use malloc instead of new because we don't use destructors and default constructors
 	Node *nodes =  (Node *) malloc(sizeof(Node) * KEYMAP_STACK_SIZE);
@@ -33,16 +33,14 @@ KeymapStack::KeymapStack(
 	for (size_t i = 1; i < KEYMAP_STACK_SIZE - 1; ++i) {
 		auto hasVal = i <= initialKeymaps.size();
 		auto val = hasVal ? initialKeymaps[i - 1] : 0;
-		nodes[i] = Node(
-				&nodes[i - 1],
-				&nodes[i + 1],
-				val,
-				hasVal);
+		nodes[i] = Node(&nodes[i - 1],
+		                &nodes[i + 1],
+		                val,
+		                hasVal);
 	}
-	nodes[KEYMAP_STACK_SIZE-1] = Node(
-			&nodes[KEYMAP_STACK_SIZE - 2],
-			nullptr, 0, false);
-	
+	nodes[KEYMAP_STACK_SIZE - 1] = Node(&nodes[KEYMAP_STACK_SIZE - 2],
+	                                    nullptr, 0, false);
+
 	rootNode = node = &nodes[0];
 
 	for (auto mod = 0; mod < MAX_MOD; ++mod) {
@@ -114,7 +112,7 @@ void KeymapStack::HandleKey(Key key, int event) {
 		++modifiers[it->second];
 		rootNode->value |= (1 << it->second);
 	}
-	else /*KEY_VAL_UP*/ {
+	else { /*KEY_VAL_UP*/
 		if (--modifiers[it->second]) goto end;
 		rootNode->value &= ~(1 << it->second);
 	}
