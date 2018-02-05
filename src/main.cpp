@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <exception>
+#include <memory>
 
 #include "graphics_handler.h"
 #include "input_handler.h"
@@ -12,44 +13,55 @@
 
 using namespace kmswm;
 
+bool handledException = false;
 struct termios oldTermios;
-GraphicsHandler *graphics;
-InputHandler *input;
+GraphicsHandler *graphics = nullptr;
+InputHandler *input = nullptr;
 
-void restoreState() {
-	if (input)
-		input->Stop();
+void start(const char *inputDev, const char *graphicsDev) {
+	tcgetattr(STDIN_FILENO, &oldTermios);
+	struct termios newTermios = oldTermios;
+	newTermios.c_iflag &= ~(IXON);
+	newTermios.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
+	tcsetattr(STDIN_FILENO, TCSANOW, &newTermios);
 
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldTermios);
-	//delete graphics;
-	delete input;
-	printf("<on_exit>\n");
+	graphics = GraphicsHandler::create(graphicsDev).Get();
+	//input = new InputHandler(inputDev, [] {
+	//	graphics->Stop();
+	//});
 
-	getchar(); //if we don't do this all input will be sent to shell
+	//input->ThreadInit();
+	graphics->ThreadInit();
+
+	//input->ThreadJoin();
+	graphics->ThreadJoin();
 }
-bool handled = false;
+void stop() {
+	//if (input)
+	//	input->Stop();
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldTermios);
+	delete graphics;
+	graphics = nullptr;
+	//delete input;
+	printf("<on_exit>\n");
+	//getchar(); //if we don't do this all input will be sent to shell
+}
 void handleException() {
-	if (handled) return;
+	if (handledException) return;
 	try {
 		throw;
 	}
 	catch (std::exception& e) {
-		handled = true;
+		handledException = true;
 		fprintf(stderr, "\nerror:\n\t%s\n", e.what());
-		restoreState();
+		stop();
 		exit(-1);
 	}
 }
 
 int main(int argc, char *argv[]) {
-	tcgetattr(STDIN_FILENO, &oldTermios);
-	struct termios newTermios = oldTermios;
-	atexit(restoreState);
+	atexit(stop);
 	std::set_terminate(handleException);
-
-	newTermios.c_iflag &= ~(IXON);
-	newTermios.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newTermios);
 
 	const char *inputDev = "/dev/input/event1";
 	const char *graphicsDev = "/dev/dri/card0";
@@ -57,18 +69,7 @@ int main(int argc, char *argv[]) {
 		inputDev = argv[1];
 	if (argc > 2)
 		graphicsDev = argv[2];
-	auto g = GraphicsHandler::create(graphicsDev).Get();
-	graphics = &g;
-	input = new InputHandler(inputDev, [] {
-		graphics->Stop();
-	});
-
-	input->ThreadInit();
-	graphics->ThreadInit();
-
-	input->ThreadJoin();
-	graphics->ThreadJoin();
-
+	start(inputDev, graphicsDev);
 	return 0;
 }
 

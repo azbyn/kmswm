@@ -14,6 +14,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <memory>
 
 #include "expected.h"
 #include "result.h"
@@ -21,30 +22,42 @@
 #include "color.h"
 
 namespace kmswm {
-class ModesetDev {
-	//ModesetDev(FD fd, drmModeRes *res, drmModeConnector *drmConn);
-public:
-	uint32_t width;
-	uint32_t height;
+
+struct ModesetBuf {
 	uint32_t stride;
 	uint32_t size;
 	uint32_t handle;
 	Color *map;
+	uint32_t fb;
+	//ModesetBuf() = default;
+	Result CreateFb(FD fd, uint32_t width, uint32_t height);
+	void DestroyFb(FD fd);
+};
+
+struct ModesetDev {
+	//ModesetDev(FD fd, drmModeRes *res, drmModeConnector *drmConn);
+	uint32_t width;
+	uint32_t height;
+
+	unsigned int frontBuf = 0;
+	ModesetBuf bufs[2];
 
 	drmModeModeInfo mode;
-	uint32_t fb;
 	uint32_t connId;
-	uint32_t crtc;
+	uint32_t crtcId;
 	drmModeCrtc *savedCrtc;
 
+
 	static Expected<ModesetDev> create(const std::vector<ModesetDev>& modesets,
-	                                   int i, FD fd, drmModeRes *res, drmModeConnector *drmConn);
+	                                   FD fd, const drmModeRes *res, const drmModeConnector *drmConn);
 	ModesetDev(uint32_t connId);
 	~ModesetDev();
 
-	Result SetupDev(const std::vector<ModesetDev>& modesets, FD fd, drmModeRes *res, drmModeConnector *conn);
-	Result FindCrtc(const std::vector<ModesetDev>& modesets, FD fd, drmModeRes *res, drmModeConnector *conn);
-	Result CreateFb(FD fd);
+	Result SetupDev(const std::vector<ModesetDev>& modesets, FD fd, const drmModeRes *res, const drmModeConnector *conn);
+	Result FindCrtc(const std::vector<ModesetDev>& modesets, FD fd, const drmModeRes *res, const drmModeConnector *conn);
+
+	//ModesetBuf& GetFrontBuff();
+	//ModesetBuf& GetBackBuff();
 };
 
 class GraphicsHandler {
@@ -70,7 +83,7 @@ public:
 	void Draw();
 	void Cleanup();
 
-	static Expected<GraphicsHandler> create(const char *device);
+	static Expected<GraphicsHandler *> create(const char *device);
 };
 
 } // namespace kmswm
