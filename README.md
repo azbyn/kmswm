@@ -1,2 +1,2 @@
-# kmswm
-The begginning of a Window Manager in kms
+# twgn
+a Terminal emulator With a Good Name
