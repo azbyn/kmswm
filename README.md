@@ -1,2 +1,2 @@
-# kmswm
-The begginning of a Window Manager in kms
+# Utils
+Some useful snipets of code.

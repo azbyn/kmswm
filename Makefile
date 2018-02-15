@@ -1,37 +1,46 @@
-COMPILER := g++
+CXX := cc_args clang++
 SRC_DIR := src
 BUILD_DIR := build
-TARGET := kmswm
-BIN_DIR := ~/bin/
-#BINDIR := /usr/local/bin
+TARGET := --change-me--
 
 SRCS := $(shell find $(SRC_DIR) -name *.cpp)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
-
-THIS_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+#THIS_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 
 
 CPPFLAGS := $(INC_FLAGS)
-CPPFLAGS += -Wall -Wextra -Wpedantic -g -std=c++17
-CPPFLAGS += -I /usr/include/libdrm
+CPPFLAGS += -Wall -Wextra -g -std=c++17 -ferror-limit=1
+#CPPFLAGS += -g -std=c++17 -Weverything \
+-Wno-c++98-compat \
+-Wno-c++98-compat-pedantic \
+-Wno-sign-conversion \
+-Wno-unused-macros \
+-Wno-format-nonliteral \
+-Wno-shorten-64-to-32 \
+-Wno-unused-const-variable \
+-Wno-missing-variable-declarations \
+-Wno-old-style-cast \
+-Wno-shadow-field-in-constructor \
+-Wno-padded \
+-ferror-limit=1
 
-LDFLAGS := -pthread -ldrm -lgbm -lEGL -lGLESv2
+CPPFLAGS += -DVERSION=\"0.0.0.1\" #`pkg-config --cflags ...`  -I...
+
+
+
+LDFLAGS := -pthread #-l...
 
 $(TARGET): $(OBJS)
-	@$(COMPILER) $(OBJS) -o $@ $(LDFLAGS)
+	@$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	@$(MKDIR_P) $(dir $@)
-	@$(COMPILER) $(CPPFLAGS) -c $< -o $@
+	@$(CXX) $(CPPFLAGS) -c $< -o $@
 
-install:
-	@cp $(TARGET) $(BIN_DIR)
 
 .PHONY: clean
 clean:
